@@ -45,7 +45,7 @@ func NewKeyMap() KeyMap {
 		),
 		Enter: key.NewBinding(
 			key.WithKeys(keys.Enter.String(), keys.Space.String()),
-			key.WithHelp("enter or spacebar", "To submit the form "),
+			key.WithHelp("enter or spacebar", "submit "),
 		),
 		Help: key.NewBinding(
 			key.WithKeys("?"),
@@ -60,7 +60,6 @@ func (km KeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{
 		km.Enter,
 		km.Quit,
-		km.Help,
 	}
 
 }
