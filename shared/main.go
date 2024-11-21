@@ -17,7 +17,19 @@ func (ts TermialSize) Height() int {
 
 }
 
-func NewTerminalSize(width, height int) TermialSize {
+var NewTermialSizeManager = new(TermialSizeManager)
 
-	return TermialSize{width, height}
+type TermialSizeManager struct {
+	terminalSize TermialSize
+}
+
+func (tsm *TermialSizeManager) SetTerminalSize(width, height int) {
+
+	tsm.terminalSize = TermialSize{width, height}
+
+}
+
+func (tsm TermialSizeManager) GetTerminalSize() TermialSize {
+
+	return tsm.terminalSize
 }

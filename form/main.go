@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"atomicgo.dev/keyboard/keys"
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -16,20 +17,10 @@ import (
 // TODO: Think about the states of the app we have idle, editing, help, submit and submitting.
 // There needs to be more inputs added to make up a form.
 type model struct {
-	terminalSize shared.TermialSize
-	inputModel   InputModel
-	submitted    bool
-}
-
-func (m *model) SetTerminalSize(width, height int) {
-
-	m.terminalSize = shared.NewTerminalSize(width, height)
-
-}
-
-func (m model) GetTerminalSize() shared.TermialSize {
-
-	return m.terminalSize
+	terminalSizeManager shared.TermialSizeManager
+	inputModel          InputModel
+	helpModel           help.Model
+	submitted           bool
 }
 
 func initialModel() model {
@@ -41,8 +32,7 @@ func initialModel() model {
 }
 
 type KeyMap struct {
-	Quit key.Binding
-	// TODO: Help key binding is defined but not used
+	Quit  key.Binding
 	Help  key.Binding
 	Enter key.Binding
 }
@@ -107,7 +97,7 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 
-		m.SetTerminalSize(msg.Width, msg.Height)
+		m.terminalSizeManager.SetTerminalSize(msg.Width, msg.Height)
 
 	case AfterSumbitedMsg:
 
@@ -127,7 +117,7 @@ func (m model) View() string {
 
 	AbsoluteCenter := func(terminalString string) string {
 
-		terminalSize := m.GetTerminalSize()
+		terminalSize := m.terminalSizeManager.GetTerminalSize()
 
 		return lipgloss.Place(
 			terminalSize.Width(),
