@@ -126,9 +126,7 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	}
 
-	cmd := m.inputModel.Update(message)
-
-	return m, cmd
+	return m, m.inputModel.Update(message)
 
 }
 
@@ -150,12 +148,15 @@ func (m model) View() string {
 	return AbsoluteCenter(
 		lipgloss.JoinVertical(
 			lipgloss.Center,
-			lo.If(
-				m.submitted,
-				fmt.Sprintf("Congradulations %s", m.inputModel.GetValue()),
-			).
-				Else(m.inputModel.View()),
-			m.helpModel.View(NewKeyMap()),
+			shared.NewRows(2).
+				Render(
+					lo.If(
+						m.submitted,
+						fmt.Sprintf("Congradulations %s", m.inputModel.GetValue()),
+					).
+						Else(m.inputModel.View()),
+					m.helpModel.View(NewKeyMap()),
+				),
 		),
 	)
 }
