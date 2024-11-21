@@ -2,7 +2,6 @@ package form
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"atomicgo.dev/keyboard/keys"
@@ -23,7 +22,7 @@ type model struct {
 	submitted           bool
 }
 
-func initialModel() model {
+func InitialModel() model {
 
 	return model{
 		inputModel: TextInput("Name", "What is your name?").Focus(),
@@ -56,6 +55,25 @@ func NewKeyMap() KeyMap {
 
 }
 
+func (km KeyMap) ShortHelp() []key.Binding {
+
+	return []key.Binding{
+		km.Enter,
+		km.Quit,
+		km.Help,
+	}
+
+}
+
+func (km KeyMap) FullHelp() [][]key.Binding {
+
+	return [][]key.Binding{
+		{km.Enter, km.Quit},
+		{km.Help},
+	}
+
+}
+
 // AfterSubmittedMsg is a message that is sent after a form has been submitted
 // and helps control the flow of the form submission process
 type AfterSumbitedMsg struct{}
@@ -76,6 +94,8 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case key.Matches(msg, keyMap.Help):
+
+			m.helpModel.ShowAll = !m.helpModel.ShowAll
 
 		case key.Matches(msg, keyMap.Enter):
 
@@ -134,7 +154,9 @@ func (m model) View() string {
 			lo.If(
 				m.submitted,
 				fmt.Sprintf("Congradulations %s", m.inputModel.GetValue()),
-			).Else(m.inputModel.View()),
+			).
+				Else(m.inputModel.View()),
+			m.helpModel.View(NewKeyMap()),
 		),
 	)
 }
@@ -142,15 +164,5 @@ func (m model) View() string {
 func (m model) Init() tea.Cmd {
 
 	return nil
-
-}
-
-func main() {
-
-	if _, err := tea.NewProgram(initialModel(), tea.WithAltScreen()).Run(); err != nil {
-
-		log.Fatal(err)
-
-	}
 
 }
