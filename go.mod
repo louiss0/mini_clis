@@ -1,4 +1,4 @@
-module githhub.com/counter
+module github.com/mini-clis
 
 go 1.23.2
 

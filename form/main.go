@@ -1,4 +1,4 @@
-package main
+package form
 
 import (
 	"fmt"
@@ -7,42 +7,27 @@ import (
 
 	"atomicgo.dev/keyboard/keys"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mini-clis/shared"
 	"github.com/samber/lo"
 )
 
-type TermialSize struct {
-	width  int
-	height int
-}
-
-func (ts TermialSize) Width() int {
-
-	return ts.width
-
-}
-
-func (ts TermialSize) Height() int {
-
-	return ts.height
-
-}
-
+// TODO: Think about the states of the app we have idle, editing, help, submit and submitting.
+// There needs to be more inputs added to make up a form.
 type model struct {
-	terminalSize TermialSize
+	terminalSize shared.TermialSize
 	inputModel   InputModel
-	Submitted    bool
+	submitted    bool
 }
 
 func (m *model) SetTerminalSize(width, height int) {
 
-	m.terminalSize = TermialSize{width, height}
+	m.terminalSize = shared.NewTerminalSize(width, height)
 
 }
 
-func (m model) GetTerminalSize() TermialSize {
+func (m model) GetTerminalSize() shared.TermialSize {
 
 	return m.terminalSize
 }
@@ -56,7 +41,8 @@ func initialModel() model {
 }
 
 type KeyMap struct {
-	Quit  key.Binding
+	Quit key.Binding
+	// TODO: Help key binding is defined but not used
 	Help  key.Binding
 	Enter key.Binding
 }
@@ -69,8 +55,8 @@ func NewKeyMap() KeyMap {
 			key.WithHelp("q ctrl+c", "Quit App"),
 		),
 		Enter: key.NewBinding(
-			key.WithKeys(keys.Enter.String(), "ctrl+c"),
-			key.WithHelp("q ctrl+c", ""),
+			key.WithKeys(keys.Enter.String(), keys.Space.String()),
+			key.WithHelp("enter or spacebar", "To submit the form "),
 		),
 		Help: key.NewBinding(
 			key.WithKeys("?"),
@@ -80,115 +66,13 @@ func NewKeyMap() KeyMap {
 
 }
 
-type InputModel struct {
-	textInput    textinput.Model
-	label        string
-	defaultValue string
-}
-
-func (im *InputModel) Clear() {
-
-	im.textInput.SetValue("")
-
-}
-
-func (im *InputModel) GetValue() string {
-
-	return im.textInput.Value()
-}
-
-func (im *InputModel) Reset() {
-
-	if im.defaultValue != "" {
-
-		im.textInput.SetValue(im.defaultValue)
-
-		return
-
-	}
-
-	im.textInput.Reset()
-
-}
-
-func (im InputModel) Focus() InputModel {
-
-	im.textInput.Focus()
-
-	return im
-
-}
-
-func (im *InputModel) Update(msg tea.Msg) tea.Cmd {
-
-	textInput, cmd := im.textInput.Update(msg)
-
-	im.textInput = textInput
-
-	return cmd
-}
-
-func (im *InputModel) SetCharacterLimit(characterLimit int) *InputModel {
-
-	im.textInput.CharLimit = characterLimit
-
-	return im
-
-}
-
-func (im *InputModel) SetDefaultValue(value string) *InputModel {
-
-	if im.defaultValue != "" {
-
-		return im
-
-	}
-
-	im.textInput.SetValue(value)
-
-	im.defaultValue = value
-
-	return im
-
-}
-
-func (im *InputModel) SetWidth(width int) *InputModel {
-
-	im.textInput.Width = width
-
-	return im
-}
-
-func (im InputModel) View() string {
-
-	return fmt.Sprintf("%s\n%s", im.label, im.textInput.View())
-
-}
-
-func TextInput(label, placeholder string) InputModel {
-
-	textInput := textinput.New()
-
-	textInput.CharLimit = 25
-	textInput.TextStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.AdaptiveColor{
-			Light: "#1e293b",
-			Dark:  "#f1f5f9",
-		})
-
-	textInput.Cursor.Style = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#22d3ee"))
-
-	textInput.Placeholder = placeholder
-
-	return InputModel{textInput, label, ""}
-
-}
-
+// AfterSubmittedMsg is a message that is sent after a form has been submitted
+// and helps control the flow of the form submission process
 type AfterSumbitedMsg struct{}
 
 func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
+	// TODO: Implement Help functionality here
 	switch msg := message.(type) {
 
 	case tea.KeyMsg:
@@ -205,7 +89,7 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, keyMap.Enter):
 
-			m.Submitted = true
+			m.submitted = true
 
 			return m, func() tea.Cmd {
 
@@ -227,7 +111,7 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 	case AfterSumbitedMsg:
 
-		m.Submitted = false
+		m.submitted = false
 
 		m.inputModel.Clear()
 
@@ -258,7 +142,7 @@ func (m model) View() string {
 		lipgloss.JoinVertical(
 			lipgloss.Center,
 			lo.If(
-				m.Submitted,
+				m.submitted,
 				fmt.Sprintf("Congradulations %s", m.inputModel.GetValue()),
 			).Else(m.inputModel.View()),
 		),
