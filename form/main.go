@@ -100,17 +100,13 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.submitted = true
 
-			return m, func() tea.Cmd {
+			return m, func() tea.Msg {
 
-				return func() tea.Msg {
+				time.Sleep(time.Millisecond * 250)
 
-					time.Sleep(time.Millisecond * 250)
+				return AfterSumbitedMsg{}
 
-					return AfterSumbitedMsg{}
-
-				}
-
-			}()
+			}
 
 		}
 
