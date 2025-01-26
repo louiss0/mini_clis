@@ -174,9 +174,8 @@ func (m model) View() string {
 			),
 		),
 	)
-o
 }
-o
+
 func initialModel() tea.Model {
 
 	return new(model)
