@@ -16,7 +16,7 @@ import (
 // TODO: Think about the states of the app we have idle, editing, help, submit and submitting.
 // There needs to be more inputs added to make up a form.
 type model struct {
-	terminalSizeManager shared.TermialSizeManager
+	terminalSizeManager shared.TerminalSizeManager
 	inputModel          InputModel
 	helpModel           help.Model
 	submitted           bool

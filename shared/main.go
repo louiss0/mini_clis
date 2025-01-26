@@ -1,7 +1,6 @@
 package shared
 
 import (
-	"errors"
 	"fmt"
 	"maps"
 	"strings"
@@ -49,7 +48,7 @@ func (e BackedEnum[ValueType, Map]) Parse(input ValueType) error {
 
 	}
 
-	return errors.New(fmt.Sprintf("Invalid Enum Value %v", input))
+	return fmt.Errorf("invalid enum value %v", input)
 
 }
 
@@ -69,36 +68,36 @@ func (e BackedEnum[ValueType, Map]) Values() []ValueType {
 
 }
 
-type TermialSize struct {
+type TerminalSize struct {
 	width  int
 	height int
 }
 
-func (ts TermialSize) Width() int {
+func (ts TerminalSize) Width() int {
 
 	return ts.width
 
 }
 
-func (ts TermialSize) Height() int {
+func (ts TerminalSize) Height() int {
 
 	return ts.height
 
 }
 
-var NewTermialSizeManager = new(TermialSizeManager)
+var NewTerminalSizeManager = new(TerminalSizeManager)
 
-type TermialSizeManager struct {
-	terminalSize TermialSize
+type TerminalSizeManager struct {
+	terminalSize TerminalSize
 }
 
-func (tsm *TermialSizeManager) SetTerminalSize(width, height int) {
+func (tsm *TerminalSizeManager) SetTerminalSize(width, height int) {
 
-	tsm.terminalSize = TermialSize{width, height}
+	tsm.terminalSize = TerminalSize{width, height}
 
 }
 
-func (tsm TermialSizeManager) GetTerminalSize() TermialSize {
+func (tsm TerminalSizeManager) GetTerminalSize() TerminalSize {
 
 	return tsm.terminalSize
 }
