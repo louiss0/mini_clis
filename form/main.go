@@ -75,7 +75,7 @@ func (km KeyMap) FullHelp() [][]key.Binding {
 
 // AfterSubmittedMsg is a message that is sent after a form has been submitted
 // and helps control the flow of the form submission process
-type AfterSumbitedMsg struct{}
+type AfterSubmittedMsg struct{}
 
 func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
@@ -104,7 +104,7 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 				time.Sleep(time.Millisecond * 250)
 
-				return AfterSumbitedMsg{}
+				return AfterSubmittedMsg{}
 
 			}
 
@@ -114,7 +114,7 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.terminalSizeManager.SetTerminalSize(msg.Width, msg.Height)
 
-	case AfterSumbitedMsg:
+	case AfterSubmittedMsg:
 
 		m.submitted = false
 
@@ -125,6 +125,8 @@ func (m model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	return m, m.inputModel.Update(message)
 
 }
+
+
 
 func (m model) View() string {
 
@@ -148,7 +150,7 @@ func (m model) View() string {
 				Render(
 					lo.If(
 						m.submitted,
-						fmt.Sprintf("Congradulations %s", m.inputModel.GetValue()),
+						fmt.Sprintf("Congratulations %s", m.inputModel.GetValue()),
 					).
 						Else(m.inputModel.View()),
 					m.helpModel.View(NewKeyMap()),
