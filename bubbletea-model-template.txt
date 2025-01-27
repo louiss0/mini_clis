@@ -38,13 +38,3 @@ func (m model) View() string {
 	)
 
 }
-
-func main() {
-
-	if _, err := tea.NewProgram(initialModel(), tea.WithAltScreen()).Run(); err != nil {
-
-		log.Fatal(err)
-
-	}
-
-}
