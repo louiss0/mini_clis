@@ -6,6 +6,8 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/mini-clis/task-list/task"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +20,13 @@ var addCmd = &cobra.Command{
  The time the task was created is automatcally stored.
  `,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("add called")
+		tasks := lo.Map(args, func(item string, index int) string {
+
+			return task.NewTask(item, "").ToJSON()
+
+		})
+
+		fmt.Printf("%#v\n", tasks)
 	},
 }
 
