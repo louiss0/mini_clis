@@ -7,14 +7,35 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	backedEnum "github.com/louiss0/backed_enum"
 	zone "github.com/lrstanley/bubblezone"
 	"github.com/pterm/pterm"
 	"github.com/samber/lo"
 )
 
-const INCREMENT = "increment"
+type CounterMethodsStructure map[string]string
 
-const DECREMENT = "decrement"
+func (self CounterMethodsStructure) INCREMENT() string {
+
+	return self["INCREMENT"]
+}
+
+func (self CounterMethodsStructure) DECREMENT() string {
+
+	return self["DECREMENT"]
+}
+
+var CounterMethods = backedEnum.
+	NewBackedEnum[
+	string,
+	CounterMethodsStructure,
+	string,
+](
+	CounterMethodsStructure{
+		"INCREMENT": "increment",
+		"DECREMENT": "decrement",
+	},
+)
 
 type KeyMap struct {
 	Up   key.Binding
@@ -104,7 +125,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if msg.Action == tea.MouseActionRelease || msg.Button == tea.MouseButtonLeft {
 
-			if zone.Get(DECREMENT).InBounds(msg) {
+			if zone.Get(CounterMethods.Structure().DECREMENT()).InBounds(msg) {
 
 				if m.count <= 0 {
 
@@ -116,7 +137,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			}
 
-			if zone.Get(INCREMENT).InBounds(msg) {
+			if zone.Get(CounterMethods.Structure().INCREMENT()).InBounds(msg) {
 
 				m.count++
 
@@ -185,27 +206,27 @@ func initialModel() tea.Model {
 func IncrementButton() string {
 
 	return zone.Mark(
-		INCREMENT,
+		CounterMethods.Structure().INCREMENT(),
 		lipgloss.NewStyle().
 			Bold(true).
 			Border(lipgloss.RoundedBorder(), true).
 			Background(lipgloss.Color("92")).
 			Foreground(lipgloss.Color("47")).
 			Padding(1, 3).
-			Render(lo.Capitalize(INCREMENT)),
+			Render(lo.Capitalize(CounterMethods.Structure().INCREMENT())),
 	)
 }
 func DecrementButton() string {
 
 	return zone.Mark(
-		DECREMENT,
+		CounterMethods.Structure().DECREMENT(),
 		lipgloss.NewStyle().
 			Bold(true).
 			Border(lipgloss.RoundedBorder(), true).
 			Background(lipgloss.Color("31")).
 			Foreground(lipgloss.Color("47")).
 			Padding(1, 3).
-			Render(lo.Capitalize(DECREMENT)),
+			Render(lo.Capitalize(CounterMethods.Structure().DECREMENT())),
 	)
 }
 
