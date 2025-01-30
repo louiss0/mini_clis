@@ -2,8 +2,12 @@ package task
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
+	"os"
 	"time"
+
+	"github.com/samber/lo"
 )
 
 type Task struct {
@@ -71,3 +75,32 @@ func (self Task) ToJSON() string {
 	return string(byte)
 
 }
+
+func SaveTasks(tasks []Task) error {
+
+	dir, error := os.Getwd()
+
+	if error != nil {
+
+		return error
+	}
+
+	byte, error := json.Marshal(lo.Map(
+		tasks,
+		func(item Task, index int) string {
+			return item.ToJSON()
+		},
+	),
+	)
+
+	if error != nil {
+
+		return error
+
+	}
+
+	return os.WriteFile(fmt.Sprintf("%s/%s", dir, "task-list.json"), byte, os.ModeDevice)
+
+}
+
+func ReadTasks() {}

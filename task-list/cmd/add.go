@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/mini-clis/task-list/task"
 	"github.com/samber/lo"
@@ -20,13 +21,28 @@ var addCmd = &cobra.Command{
  The time the task was created is automatcally stored.
  `,
 	Run: func(cmd *cobra.Command, args []string) {
-		tasks := lo.Map(args, func(item string, index int) string {
 
-			return task.NewTask(item, "").ToJSON()
+		description := cmd.Flag("description").Value.String()
+
+		tasks := lo.Map(args, func(item string, index int) task.Task {
+
+			if description != "" {
+				return task.NewTask(item, description)
+			}
+
+			return task.NewTask(item, "")
 
 		})
 
-		fmt.Printf("%#v\n", tasks)
+		err := task.SaveTasks(tasks)
+
+		if err != nil {
+
+			log.Fatal(err)
+		}
+
+		fmt.Print("Added a task to the task list")
+
 	},
 }
 
@@ -41,5 +57,12 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// addCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	addCmd.Flags().StringP(
+		"description",
+		"d",
+		"",
+		`The task description.
+		What is the task about?
+		What are the requirements?`,
+	)
 }
