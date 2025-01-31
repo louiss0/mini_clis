@@ -55,30 +55,30 @@ func (self Task) UpdatedAtAsUnixDateFormat() string {
 	return self.UpdatedAt.Format(time.UnixDate)
 }
 
-func (self Task) ToJSON() string {
+type pubTasks struct {
+	Id          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
+}
 
-	byte, _ := json.Marshal(
-		struct {
-			Id          string `json:"id"`
-			Title       string `json:"title"`
-			Description string `json:"description"`
-			CreatedAt   string `json:"createdAt"`
-			UpdatedAt   string `json:"updatedAt"`
-		}{
-			Id:          self.id,
-			Title:       self.Title,
-			Description: self.Description,
-			CreatedAt:   self.createdAt,
-			UpdatedAt:   self.UpdatedAtAsUnixDateFormat(),
-		})
+func getTaskListJSONFilePath() (string, error) {
 
-	return string(byte)
+	dir, error := os.Getwd()
+
+	if error != nil {
+
+		return "", error
+	}
+
+	return fmt.Sprintf("%s/%s", dir, "task-list.json"), nil
 
 }
 
 func SaveTasks(tasks []Task) error {
 
-	dir, error := os.Getwd()
+	taskListJSONFilePath, error := getTaskListJSONFilePath()
 
 	if error != nil {
 
@@ -87,8 +87,15 @@ func SaveTasks(tasks []Task) error {
 
 	byte, error := json.Marshal(lo.Map(
 		tasks,
-		func(item Task, index int) string {
-			return item.ToJSON()
+		func(item Task, index int) pubTasks {
+
+			return pubTasks{
+				Id:          item.id,
+				Title:       item.Title,
+				Description: item.Description,
+				CreatedAt:   item.createdAt,
+				UpdatedAt:   item.UpdatedAtAsUnixDateFormat(),
+			}
 		},
 	),
 	)
