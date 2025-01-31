@@ -24,13 +24,21 @@ var addCmd = &cobra.Command{
 
 		description := cmd.Flag("description").Value.String()
 
+
+		priority, error := task.ParsePriority(cmd.Flag("priority").Value.String())
+
+		if error != nil {
+
+			log.Fatal(error)
+		}
+
 		tasks := lo.Map(args, func(item string, index int) task.Task {
 
-			if description != "" {
-				return task.NewTask(item, description)
-			}
+			task := task.NewTask(item, description)
 
-			return task.NewTask(item, "")
+			task.Priority = priority
+
+			return task
 
 		})
 
@@ -64,5 +72,13 @@ func init() {
 		`The task description.
 		What is the task about?
 		What are the requirements?`,
+	)
+
+
+	addCmd.Flags().StringP(
+		"priority",
+		"p",
+		string(task.LOW),
+		"Set a task to either a high, low or medium priority default is low",
 	)
 }

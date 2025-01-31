@@ -10,11 +10,11 @@ require (
 	github.com/lrstanley/bubblezone v0.0.0-20240914071701-b48c55a5e78e
 	github.com/pterm/pterm v0.12.79
 	github.com/samber/lo v1.49.1
+	github.com/spf13/cobra v1.8.1
 )
 
 require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/spf13/cobra v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 )
 

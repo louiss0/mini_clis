@@ -5,16 +5,45 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/samber/lo"
 )
+
+type priority string
+
+const HIGH = priority("high")
+const MEDIUM = priority("medium")
+const LOW = priority("low")
+
+func ParsePriority(input string) (priority, error) {
+
+	allowedProrities := []string{
+		string(LOW),
+		string(HIGH),
+		string(MEDIUM),
+	}
+	if !lo.Contains(allowedProrities, input) {
+
+		return "", fmt.Errorf(
+			"Wrong option %s a priority is supposed to be %s",
+			input,
+			strings.Join(allowedProrities, ","),
+		)
+	}
+
+	return priority(input), nil
+
+}
 
 type Task struct {
 	Title,
 	Description,
 	id,
 	createdAt string
+	Priority  priority
+	Complete  bool
 	UpdatedAt time.Time
 }
 
@@ -36,6 +65,7 @@ func NewTask(title, description string) Task {
 		Title:       title,
 		Description: description,
 		id:          generateRandomString(12),
+		Priority:    LOW,
 		createdAt:   time.Now().Format(time.UnixDate),
 		UpdatedAt:   time.Now(),
 	}
@@ -56,11 +86,13 @@ func (self Task) UpdatedAtAsUnixDateFormat() string {
 }
 
 type persistentTask struct {
-	Id          string `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+	Id          string   `json:"id"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	Priority    priority `json:"string"`
+	Complete    bool     `json:"boolean"`
+	CreatedAt   string   `json:"createdAt"`
+	UpdatedAt   string   `json:"supdatedAt"`
 }
 
 func getTaskListJSONFilePath() (string, error) {
@@ -93,6 +125,8 @@ func SaveTasks(tasks []Task) error {
 				Id:          item.id,
 				Title:       item.Title,
 				Description: item.Description,
+				Priority:    item.Priority,
+				Complete:    item.Complete,
 				CreatedAt:   item.createdAt,
 				UpdatedAt:   item.UpdatedAtAsUnixDateFormat(),
 			}
