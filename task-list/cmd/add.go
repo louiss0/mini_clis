@@ -8,13 +8,13 @@ import (
 	"log"
 
 	"github.com/mini-clis/task-list/task"
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )
 
 // addCmd represents the add command
 var addCmd = &cobra.Command{
 	Use:   "add",
+	Args:  cobra.ExactArgs(1),
 	Short: "Adds a task to the task list",
 	Long: `Adds a task name to the task list.
  A task can also have a description by using the --description flag.
@@ -24,23 +24,35 @@ var addCmd = &cobra.Command{
 
 		description := cmd.Flag("description").Value.String()
 
+		priority := cmd.Flag("priority").Value.String()
 
-		priority, error := task.ParsePriority(cmd.Flag("priority").Value.String())
+		title := args[0]
+
+		persistedTasks, error := task.ReadTasks()
 
 		if error != nil {
 
 			log.Fatal(error)
+
 		}
 
-		tasks := lo.Map(args, func(item string, index int) task.Task {
+		tasks := task.TransformPersistentTasksIntoTasks(persistedTasks)
 
-			task := task.NewTask(item, description)
+		newTask := task.NewTask(title, description)
 
-			task.Priority = priority
+		if priority != "" {
 
-			return task
+			parsedPriority, error := task.ParsePriority(priority)
 
-		})
+			if error != nil {
+
+				log.Fatal(error)
+
+			}
+			newTask.Priority = parsedPriority
+		}
+
+		tasks = append(tasks, newTask)
 
 		err := task.SaveTasks(tasks)
 
@@ -74,11 +86,10 @@ func init() {
 		What are the requirements?`,
 	)
 
-
 	addCmd.Flags().StringP(
 		"priority",
 		"p",
-		string(task.LOW),
+		"",
 		"Set a task to either a high, low or medium priority default is low",
 	)
 }

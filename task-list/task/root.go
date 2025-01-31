@@ -85,7 +85,7 @@ func (self Task) UpdatedAtAsUnixDateFormat() string {
 	return self.UpdatedAt.Format(time.UnixDate)
 }
 
-type persistentTask struct {
+type persistedTask struct {
 	Id          string   `json:"id"`
 	Title       string   `json:"title"`
 	Description string   `json:"description"`
@@ -119,9 +119,9 @@ func SaveTasks(tasks []Task) error {
 
 	byte, error := json.Marshal(lo.Map(
 		tasks,
-		func(item Task, index int) persistentTask {
+		func(item Task, index int) persistedTask {
 
-			return persistentTask{
+			return persistedTask{
 				Id:          item.id,
 				Title:       item.Title,
 				Description: item.Description,
@@ -144,9 +144,9 @@ func SaveTasks(tasks []Task) error {
 
 }
 
-func ReadTasks() ([]persistentTask, error) {
+func ReadTasks() ([]persistedTask, error) {
 
-	var persistentTasks []persistentTask
+	var persistentTasks []persistedTask
 
 	taskListJSONFilePath, error := getTaskListJSONFilePath()
 
@@ -170,5 +170,25 @@ func ReadTasks() ([]persistentTask, error) {
 		return persistentTasks, unmarshalError
 	}
 	return persistentTasks, unmarshalError
+
+}
+
+func TransformPersistentTasksIntoTasks(persistentTasks []persistedTask) []Task {
+
+	return lo.Map(persistentTasks, func(item persistedTask, index int) Task {
+
+		updatedAtTime, _ := time.Parse(time.UnixDate, item.UpdatedAt)
+
+		return Task{
+			Title:       item.Title,
+			Description: item.Description,
+			Priority:    item.Priority,
+			Complete:    item.Complete,
+			UpdatedAt:   updatedAtTime,
+			createdAt:   item.CreatedAt,
+			id:          item.Id,
+		}
+
+	})
 
 }
