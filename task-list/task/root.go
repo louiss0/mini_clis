@@ -92,7 +92,7 @@ type persistentTask struct {
 	Priority    priority `json:"string"`
 	Complete    bool     `json:"boolean"`
 	CreatedAt   string   `json:"createdAt"`
-	UpdatedAt   string   `json:"supdatedAt"`
+	UpdatedAt   string   `json:"updatedAt"`
 }
 
 func getTaskListJSONFilePath() (string, error) {
