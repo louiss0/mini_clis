@@ -144,15 +144,15 @@ func SaveTasks(tasks []Task) error {
 
 }
 
-func ReadTasks() ([]persistedTask, error) {
+func ReadTasks() ([]Task, error) {
 
-	var persistentTasks []persistedTask
+	var tasks []Task
 
 	taskListJSONFilePath, error := getTaskListJSONFilePath()
 
 	if error != nil {
 
-		return persistentTasks, error
+		return tasks, error
 
 	}
 
@@ -160,22 +160,19 @@ func ReadTasks() ([]persistedTask, error) {
 
 	if error != nil {
 
-		return persistentTasks, error
+		return tasks, error
 
 	}
 
-	unmarshalError := json.Unmarshal(byte, &persistentTasks)
+	var persistedTasks []persistedTask
+
+	unmarshalError := json.Unmarshal(byte, &persistedTasks)
 
 	if unmarshalError != nil {
-		return persistentTasks, unmarshalError
+		return tasks, unmarshalError
 	}
-	return persistentTasks, unmarshalError
 
-}
-
-func TransformPersistentTasksIntoTasks(persistentTasks []persistedTask) []Task {
-
-	return lo.Map(persistentTasks, func(item persistedTask, index int) Task {
+	tasks = lo.Map(persistedTasks, func(item persistedTask, index int) Task {
 
 		updatedAtTime, _ := time.Parse(time.UnixDate, item.UpdatedAt)
 
@@ -190,5 +187,7 @@ func TransformPersistentTasksIntoTasks(persistentTasks []persistedTask) []Task {
 		}
 
 	})
+
+	return tasks, nil
 
 }

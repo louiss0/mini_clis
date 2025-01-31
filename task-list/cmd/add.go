@@ -28,15 +28,13 @@ var addCmd = &cobra.Command{
 
 		title := args[0]
 
-		persistedTasks, error := task.ReadTasks()
+		tasks, error := task.ReadTasks()
 
 		if error != nil {
 
 			log.Fatal(error)
 
 		}
-
-		tasks := task.TransformPersistentTasksIntoTasks(persistedTasks)
 
 		newTask := task.NewTask(title, description)
 
