@@ -55,7 +55,7 @@ func (self Task) UpdatedAtAsUnixDateFormat() string {
 	return self.UpdatedAt.Format(time.UnixDate)
 }
 
-type pubTasks struct {
+type persistentTask struct {
 	Id          string `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
@@ -87,9 +87,9 @@ func SaveTasks(tasks []Task) error {
 
 	byte, error := json.Marshal(lo.Map(
 		tasks,
-		func(item Task, index int) pubTasks {
+		func(item Task, index int) persistentTask {
 
-			return pubTasks{
+			return persistentTask{
 				Id:          item.id,
 				Title:       item.Title,
 				Description: item.Description,
@@ -106,8 +106,35 @@ func SaveTasks(tasks []Task) error {
 
 	}
 
-	return os.WriteFile(fmt.Sprintf("%s/%s", dir, "task-list.json"), byte, os.ModeDevice)
+	return os.WriteFile(taskListJSONFilePath, byte, os.ModeDevice)
 
 }
 
-func ReadTasks() {}
+func ReadTasks() ([]persistentTask, error) {
+
+	var persistentTasks []persistentTask
+
+	taskListJSONFilePath, error := getTaskListJSONFilePath()
+
+	if error != nil {
+
+		return persistentTasks, error
+
+	}
+
+	byte, error := os.ReadFile(taskListJSONFilePath)
+
+	if error != nil {
+
+		return persistentTasks, error
+
+	}
+
+	unmarshalError := json.Unmarshal(byte, &persistentTasks)
+
+	if unmarshalError != nil {
+		return persistentTasks, unmarshalError
+	}
+	return persistentTasks, unmarshalError
+
+}
