@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/samber/lo"
+	"github.com/tidwall/pretty"
 )
 
 type priority string
@@ -90,7 +91,7 @@ type persistedTask struct {
 	Title       string   `json:"title"`
 	Description string   `json:"description"`
 	Priority    priority `json:"string"`
-	Complete    bool     `json:"boolean"`
+	Complete    bool     `json:"complete"`
 	CreatedAt   string   `json:"createdAt"`
 	UpdatedAt   string   `json:"updatedAt"`
 }
@@ -189,5 +190,40 @@ func ReadTasks() ([]Task, error) {
 	})
 
 	return tasks, nil
+
+}
+
+func MarshallTasks(tasks []Task) (string, error) {
+
+	persistedTasks := lo.Map(
+		tasks,
+		func(item Task, index int) persistedTask {
+
+			return persistedTask{
+				Id:          item.id,
+				Title:       item.Title,
+				Description: item.Description,
+				Priority:    item.Priority,
+				Complete:    item.Complete,
+				CreatedAt:   item.createdAt,
+				UpdatedAt:   item.UpdatedAtAsUnixDateFormat(),
+			}
+		},
+	)
+
+	byte, error := json.Marshal(&persistedTasks)
+
+	if error != nil {
+
+		return "", error
+
+	}
+
+	return string(
+		pretty.Color(
+			pretty.PrettyOptions(byte, nil),
+			nil,
+		),
+	), nil
 
 }
