@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"log"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/mini-clis/task-list/task"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )
 
@@ -49,8 +51,18 @@ var listCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		filterPriority := cmd.Flag(FILTER_PRIORITY).Value.String()
-		filterComplete := cmd.Flag(FILTER_COMPLETE).Value.String()
-		filterIncomplete := cmd.Flag(FILTER_INCOMPLETE).Value.String()
+
+		filterComplete, err := strconv.ParseBool(cmd.Flag(FILTER_COMPLETE).Value.String())
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		filterIncomplete, err := strconv.ParseBool(cmd.Flag(FILTER_INCOMPLETE).Value.String())
+
+		if err != nil {
+			log.Fatal(err)
+		}
 		sortDate := cmd.Flag(SORT_DATE).Value.String()
 		sortPriority := cmd.Flag(SORT_PRIORITY).Value.String()
 
@@ -123,6 +135,41 @@ var listCmd = &cobra.Command{
 
 		}
 
+		if filterComplete {
+
+			tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
+
+				return item.Complete
+			})
+
+		}
+
+		if filterIncomplete {
+
+			tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
+
+				return !item.Complete
+			})
+
+		}
+
+		if filterPriority == "" {
+
+			priority, error := task.ParsePriority(filterPriority)
+
+			if error != nil {
+
+				log.Fatal(err)
+
+			}
+
+			tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
+
+				return item.Priority == priority
+			})
+
+		}
+
 		stringifiedTasks, error := task.MarshallTasks(tasks)
 
 		if error != nil {
@@ -148,8 +195,8 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	listCmd.Flags().String(FILTER_PRIORITY, "", "Filter tasks by priority")
-	listCmd.Flags().String(FILTER_COMPLETE, "", "Filter tasks by completed")
-	listCmd.Flags().String(FILTER_INCOMPLETE, "", "Filter tasks by incompleted")
+	listCmd.Flags().Bool(FILTER_COMPLETE, false, "Filter tasks by completed")
+	listCmd.Flags().Bool(FILTER_INCOMPLETE, false, "Filter tasks by incompleted")
 
 	listCmd.MarkFlagsMutuallyExclusive(FILTER_COMPLETE, FILTER_INCOMPLETE)
 
