@@ -154,7 +154,7 @@ var listCmd = &cobra.Command{
 
 		}
 
-		if filterPriority == "" {
+		if filterPriority != "" {
 
 			priority := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
 				task.ParsePriority(filterPriority),
@@ -171,7 +171,7 @@ var listCmd = &cobra.Command{
 			task.MarshallTasks(tasks),
 		)
 
-		fmt.Println("Here is the list of tasks you have to do")
+		// fmt.Println("Here is the list of tasks you have to do")
 		fmt.Printf("%s", stringifiedTasks)
 
 	},
@@ -179,6 +179,8 @@ var listCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(listCmd)
+
+
 
 	// Here you will define your flags and configuration settings.
 
