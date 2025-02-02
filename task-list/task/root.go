@@ -18,6 +18,21 @@ const HIGH = priority("high")
 const MEDIUM = priority("medium")
 const LOW = priority("low")
 
+func (self priority) Order() int {
+
+	return map[priority]int{
+		HIGH:   3,
+		MEDIUM: 2,
+		LOW:    1,
+	}[self]
+
+}
+
+func (self priority) Value() string {
+
+	return string(self)
+}
+
 func ParsePriority(input string) (priority, error) {
 
 	allowedProrities := []string{
@@ -25,6 +40,7 @@ func ParsePriority(input string) (priority, error) {
 		string(HIGH),
 		string(MEDIUM),
 	}
+
 	if !lo.Contains(allowedProrities, input) {
 
 		return "", fmt.Errorf(
