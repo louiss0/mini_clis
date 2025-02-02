@@ -5,12 +5,11 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/mini-clis/task-list/error_log"
 	"github.com/mini-clis/task-list/task"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -50,28 +49,27 @@ var listCmd = &cobra.Command{
 	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		filterPriority := cmd.Flag(FILTER_PRIORITY).Value.String()
+		filterPriority := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
+			cmd.Flags().GetString(FILTER_PRIORITY),
+		)
 
-		filterComplete, err := strconv.ParseBool(cmd.Flag(FILTER_COMPLETE).Value.String())
+		filterComplete := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
+			cmd.Flags().GetBool(FILTER_COMPLETE),
+		)
 
-		if err != nil {
-			log.Fatal(err)
-		}
+		filterIncomplete := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
+			cmd.Flags().GetBool(FILTER_INCOMPLETE),
+		)
 
-		filterIncomplete, err := strconv.ParseBool(cmd.Flag(FILTER_INCOMPLETE).Value.String())
+		sortDate := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
+			cmd.Flags().GetString(SORT_DATE),
+		)
 
-		if err != nil {
-			log.Fatal(err)
-		}
-		sortDate := cmd.Flag(SORT_DATE).Value.String()
-		sortPriority := cmd.Flag(SORT_PRIORITY).Value.String()
+		sortPriority := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
+			cmd.Flags().GetString(SORT_PRIORITY),
+		)
 
-		tasks, error := task.ReadTasks()
-
-		if error != nil {
-
-			log.Fatal(error)
-		}
+		tasks := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(task.ReadTasks())
 
 		if sortPriority == HIGHEST {
 
@@ -93,14 +91,14 @@ var listCmd = &cobra.Command{
 		if sortDate == LATEST {
 
 			slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
-				aTime, err := time.Parse(time.UnixDate, a.CreatedAt())
-				if err != nil {
-					log.Fatal(err)
-				}
-				bTime, err := time.Parse(time.UnixDate, b.CreatedAt())
-				if err != nil {
-					log.Fatal(err)
-				}
+
+				aTime := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
+					time.Parse(time.UnixDate, a.CreatedAt()),
+				)
+
+				bTime := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
+					time.Parse(time.UnixDate, b.CreatedAt()),
+				)
 
 				if aTime.After(bTime) {
 					return -1
@@ -116,20 +114,23 @@ var listCmd = &cobra.Command{
 		if sortDate == EARLIEST {
 
 			slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
-				aTime, err := time.Parse(time.UnixDate, a.CreatedAt())
-				if err != nil {
-					log.Fatal(err)
-				}
-				bTime, err := time.Parse(time.UnixDate, b.CreatedAt())
-				if err != nil {
-					log.Fatal(err)
-				}
+
+				aTime := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
+					time.Parse(time.UnixDate, a.CreatedAt()),
+				)
+
+				bTime := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
+					time.Parse(time.UnixDate, b.CreatedAt()),
+				)
+
 				if aTime.After(bTime) {
 					return 1
 				}
+
 				if bTime.After(aTime) {
 					return -1
 				}
+
 				return 0
 			})
 
@@ -155,13 +156,9 @@ var listCmd = &cobra.Command{
 
 		if filterPriority == "" {
 
-			priority, error := task.ParsePriority(filterPriority)
-
-			if error != nil {
-
-				log.Fatal(err)
-
-			}
+			priority := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
+				task.ParsePriority(filterPriority),
+			)
 
 			tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
 
@@ -170,12 +167,9 @@ var listCmd = &cobra.Command{
 
 		}
 
-		stringifiedTasks, error := task.MarshallTasks(tasks)
-
-		if error != nil {
-
-			log.Fatal(error)
-		}
+		stringifiedTasks := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
+			task.MarshallTasks(tasks),
+		)
 
 		fmt.Println("Here is the list of tasks you have to do")
 		fmt.Printf("%s", stringifiedTasks)
