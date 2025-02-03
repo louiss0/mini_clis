@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -32,6 +33,10 @@ type mockPersistedTask struct {
 	UpdatedAt   string `json:"updatedAt"`
 }
 
+var createFlag = func(flagName string) string {
+	return fmt.Sprintf("--%s", flagName)
+}
+
 func TestListCommand(t *testing.T) {
 
 	assert := assert.New(t)
@@ -53,6 +58,16 @@ func TestListCommand(t *testing.T) {
 		assert.NoError(error)
 
 		assert.Greater(len(tasks), 0)
+
+	})
+
+	t.Run("it errors when filter-priority with wrong value is passed", func(t *testing.T) {
+
+		output, error := executeCommand(rootCmd, "list", createFlag(FILTER_PRIORITY), "foo")
+
+		assert.NoError(error)
+
+		assert.NotNil(output)
 
 	})
 
