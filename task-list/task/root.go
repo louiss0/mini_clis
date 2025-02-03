@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/samber/lo"
-	"github.com/tidwall/pretty"
 )
 
 type priority string
@@ -112,27 +111,9 @@ type persistedTask struct {
 	UpdatedAt   string   `json:"updatedAt"`
 }
 
-func getTaskListJSONFilePath() (string, error) {
-
-	dir, error := os.Getwd()
-
-	if error != nil {
-
-		return "", error
-	}
-
-	return fmt.Sprintf("%s/%s", dir, "task-list.json"), nil
-
-}
+const TASK_LIST_STORAGE_PATH = "/home/shelton-louis/Desktop/cli-projects/mini-clis/task-list/task-list.json"
 
 func SaveTasks(tasks []Task) error {
-
-	taskListJSONFilePath, error := getTaskListJSONFilePath()
-
-	if error != nil {
-
-		return error
-	}
 
 	byte, error := json.Marshal(lo.Map(
 		tasks,
@@ -157,7 +138,7 @@ func SaveTasks(tasks []Task) error {
 
 	}
 
-	return os.WriteFile(taskListJSONFilePath, byte, os.ModeDevice)
+	return os.WriteFile(TASK_LIST_STORAGE_PATH, byte, os.ModeDevice)
 
 }
 
@@ -165,15 +146,7 @@ func ReadTasks() ([]Task, error) {
 
 	var tasks []Task
 
-	taskListJSONFilePath, error := getTaskListJSONFilePath()
-
-	if error != nil {
-
-		return tasks, error
-
-	}
-
-	byte, error := os.ReadFile(taskListJSONFilePath)
+	byte, error := os.ReadFile(TASK_LIST_STORAGE_PATH)
 
 	if error != nil {
 
@@ -235,11 +208,6 @@ func MarshallTasks(tasks []Task) (string, error) {
 
 	}
 
-	return string(
-		pretty.Color(
-			pretty.PrettyOptions(byte, nil),
-			nil,
-		),
-	), nil
+	return string(byte), nil
 
 }
