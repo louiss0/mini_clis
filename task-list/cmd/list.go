@@ -172,15 +172,16 @@ var listCmd = &cobra.Command{
 		)
 
 		// fmt.Println("Here is the list of tasks you have to do")
-		fmt.Printf("%s", stringifiedTasks)
+		fmt.Fprintln(
+			cmd.OutOrStdout(),
+			stringifiedTasks,
+		)
 
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(listCmd)
-
-
 
 	// Here you will define your flags and configuration settings.
 
