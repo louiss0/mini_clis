@@ -13,10 +13,11 @@ import (
 func executeCommand(cmd *cobra.Command, args ...string) (string, error) {
 
 	buffer := new(bytes.Buffer)
+	cmd.SetArgs(args)
 
 	cmd.SetOut(buffer)
+
 	cmd.SetErr(buffer)
-	cmd.SetArgs(args)
 
 	err := cmd.Execute()
 
