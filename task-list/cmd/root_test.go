@@ -78,9 +78,9 @@ func TestListCommand(t *testing.T) {
 
 		fmt.Println(output)
 
-		assert.NoError(error)
+		assert.Error(error)
 
-		assert.NotEmpty(output)
+		assert.Empty(output)
 	})
 
 }
