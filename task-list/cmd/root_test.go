@@ -72,4 +72,15 @@ func TestListCommand(t *testing.T) {
 
 	})
 
+	t.Run("it errors when wrong sort-date is passed", func(t *testing.T) {
+
+		output, error := executeCommand(rootCmd, "list", createFlag(SORT_DATE), "foo")
+
+		fmt.Println(output)
+
+		assert.NoError(error)
+
+		assert.NotEmpty(output)
+	})
+
 }
