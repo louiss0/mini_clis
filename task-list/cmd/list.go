@@ -106,6 +106,20 @@ func createListCommand() *cobra.Command {
 				})
 			}
 
+			sortDateIsNotEmptyAndItHasInCorrrectValues :=
+				sortDate != "" && !lo.Contains(allowedDateSortValues, sortDate)
+
+			if sortDateIsNotEmptyAndItHasInCorrrectValues {
+
+				return custom_errors.CreateInvalidFlagErrorWithMessage(
+					fmt.Sprintf(
+						"The only allowed value for sort-priority are %s",
+						strings.Join(allowedDateSortValues, ","),
+					),
+				)
+
+			}
+
 			if sortDate == LATEST {
 				slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
 					aTime, aTimeErr := time.Parse(time.UnixDate, a.CreatedAt())
@@ -191,6 +205,15 @@ func createListCommand() *cobra.Command {
 		},
 	}
 
+	// Here you will define your flags and configuration settings.
+
+	// Cobra supports Persistent Flags which will work for this command
+	// and all subcommands, e.g.:
+	// listCmd.PersistentFlags().String("foo", "", "A help for foo")
+
+	// Cobra supports local flags which will only run when this command
+	// is called directly, e.g.:
+
 	listCmd.Flags().String(FILTER_PRIORITY, "", "Filter tasks by priority")
 	listCmd.RegisterFlagCompletionFunc(
 		FILTER_PRIORITY,
@@ -239,12 +262,4 @@ func init() {
 
 	rootCmd.AddCommand(createListCommand())
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// listCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
 }
