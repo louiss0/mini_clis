@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mini-clis/task-list/custom_errors"
 	"github.com/mini-clis/task-list/task"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -28,7 +29,7 @@ const HIGHEST = "highest"
 
 const LOWEST = "lowest"
 
-var allowedPriortySortValues = []string{
+var allowedPrioritySortValues = []string{
 	HIGHEST,
 	LOWEST,
 }
@@ -40,151 +41,156 @@ const SORT_DATE = "sort-date"
 const SORT_PRIORITY = "sort-priority"
 
 // listCmd represents the list command
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "Get a list of all of your tasks",
-	Long: `Get a list of all the tasks that you need to do today.
-	You will see the
-	`,
-	Args:         cobra.NoArgs,
-	SilenceUsage: true,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		filterPriority, filterPriorityErr := cmd.Flags().GetString(FILTER_PRIORITY)
+func createListCommand() *cobra.Command {
 
-		filterComplete, filterCompleteError := cmd.Flags().GetBool(FILTER_COMPLETE)
+	var listCmd = &cobra.Command{
+		Use:   "list",
+		Short: "Get a list of all of your tasks",
+		Long: `Get a list of all the tasks that you need to do today.
+			You will see the
+			`,
+		Args:         cobra.NoArgs,
+		SilenceUsage: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			filterPriority, filterPriorityErr := cmd.Flags().GetString(FILTER_PRIORITY)
 
-		filterIncomplete, filterIncompleteErr := cmd.Flags().GetBool(FILTER_INCOMPLETE)
+			filterComplete, filterCompleteError := cmd.Flags().GetBool(FILTER_COMPLETE)
 
-		sortDate, sortDateErr := cmd.Flags().GetString(SORT_DATE)
+			filterIncomplete, filterIncompleteErr := cmd.Flags().GetBool(FILTER_INCOMPLETE)
 
-		sortPriority, sortPriorityErr := cmd.Flags().GetString(SORT_PRIORITY)
+			sortDate, sortDateErr := cmd.Flags().GetString(SORT_DATE)
 
-		flagError := errors.Join(
-			filterPriorityErr,
-			filterCompleteError,
-			filterIncompleteErr,
-			sortDateErr,
-			sortPriorityErr,
-		)
+			sortPriority, sortPriorityErr := cmd.Flags().GetString(SORT_PRIORITY)
 
-		if flagError != nil {
-			return flagError
-		}
+			flagError := errors.Join(
+				filterPriorityErr,
+				filterCompleteError,
+				filterIncompleteErr,
+				sortDateErr,
+				sortPriorityErr,
+			)
 
-		tasks, tasksErr := task.ReadTasks()
-
-		if tasksErr != nil {
-			return tasksErr
-		}
-
-		if sortPriority == HIGHEST {
-			slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
-				return a.Priority.Order() - b.Priority.Order()
-			})
-		}
-
-		if sortPriority == LOWEST {
-			slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
-				return b.Priority.Order() - a.Priority.Order()
-			})
-		}
-
-		if sortDate == LATEST {
-			slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
-				aTime, aTimeErr := time.Parse(time.UnixDate, a.CreatedAt())
-				if aTimeErr != nil {
-					return 0
-				}
-
-				bTime, bTimeErr := time.Parse(time.UnixDate, b.CreatedAt())
-				if bTimeErr != nil {
-					return 0
-				}
-
-				if aTime.After(bTime) {
-					return -1
-				}
-				if bTime.After(aTime) {
-					return 1
-				}
-				return 0
-			})
-		}
-
-		if sortDate == EARLIEST {
-			slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
-				aTime, aTimeErr := time.Parse(time.UnixDate, a.CreatedAt())
-				if aTimeErr != nil {
-					return 0
-				}
-
-				bTime, bTimeErr := time.Parse(time.UnixDate, b.CreatedAt())
-				if bTimeErr != nil {
-					return 0
-				}
-
-				if aTime.After(bTime) {
-					return 1
-				}
-				if bTime.After(aTime) {
-					return -1
-				}
-				return 0
-			})
-		}
-
-		if filterComplete {
-			tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
-				return item.Complete
-			})
-		}
-
-		if filterIncomplete {
-			tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
-				return !item.Complete
-			})
-		}
-
-		if filterPriority != "" {
-			priority, priorityErr := task.ParsePriority(filterPriority)
-
-			if priorityErr != nil {
-				return priorityErr
+			if flagError != nil {
+				return flagError
 			}
 
-			tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
-				return item.Priority == priority
-			})
-		}
+			tasks, tasksErr := task.ReadTasks()
 
-		stringifiedTasks, stringifiedTasksErr := task.MarshallTasks(tasks)
+			if tasksErr != nil {
+				return tasksErr
+			}
 
-		if stringifiedTasksErr != nil {
-			return stringifiedTasksErr
-		}
+			sortPriorityIsEmptyAndItHasIncorrectValues :=
+				sortPriority != "" && !lo.Contains(allowedPrioritySortValues, sortPriority)
 
-		fmt.Println("Here is the list of tasks you have to do")
-		fmt.Fprintln(
-			cmd.OutOrStdout(),
-			stringifiedTasks,
-		)
+			if sortPriorityIsEmptyAndItHasIncorrectValues {
 
-		return nil
+				return custom_errors.CreateInvalidFlagErrorWithMessage(
+					fmt.Sprintf(
+						"The only allowed value for sort-priority are %s",
+						strings.Join(allowedPrioritySortValues, ","),
+					),
+				)
 
-	},
-}
+			}
 
-func init() {
-	rootCmd.AddCommand(listCmd)
+			if sortPriority == HIGHEST {
+				slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
+					return a.Priority.Order() - b.Priority.Order()
+				})
+			}
 
-	// Here you will define your flags and configuration settings.
+			if sortPriority == LOWEST {
+				slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
+					return b.Priority.Order() - a.Priority.Order()
+				})
+			}
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// listCmd.PersistentFlags().String("foo", "", "A help for foo")
+			if sortDate == LATEST {
+				slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
+					aTime, aTimeErr := time.Parse(time.UnixDate, a.CreatedAt())
+					if aTimeErr != nil {
+						return 0
+					}
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
+					bTime, bTimeErr := time.Parse(time.UnixDate, b.CreatedAt())
+					if bTimeErr != nil {
+						return 0
+					}
+
+					if aTime.After(bTime) {
+						return -1
+					}
+					if bTime.After(aTime) {
+						return 1
+					}
+					return 0
+				})
+			}
+
+			if sortDate == EARLIEST {
+				slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
+					aTime, aTimeErr := time.Parse(time.UnixDate, a.CreatedAt())
+					if aTimeErr != nil {
+						return 0
+					}
+
+					bTime, bTimeErr := time.Parse(time.UnixDate, b.CreatedAt())
+					if bTimeErr != nil {
+						return 0
+					}
+
+					if aTime.After(bTime) {
+						return 1
+					}
+					if bTime.After(aTime) {
+						return -1
+					}
+					return 0
+				})
+			}
+
+			if filterComplete {
+				tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
+					return item.Complete
+				})
+			}
+
+			if filterIncomplete {
+				tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
+					return !item.Complete
+				})
+			}
+
+			if filterPriority != "" {
+				priority, priorityErr := task.ParsePriority(filterPriority)
+
+				if priorityErr != nil {
+					return priorityErr
+				}
+
+				tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
+					return item.Priority == priority
+				})
+			}
+
+			stringifiedTasks, stringifiedTasksErr := task.MarshallTasks(tasks)
+
+			if stringifiedTasksErr != nil {
+				return stringifiedTasksErr
+			}
+
+			fmt.Println("Here is the list of tasks you have to do")
+			fmt.Fprintln(
+				cmd.OutOrStdout(),
+				stringifiedTasks,
+			)
+
+			return nil
+
+		},
+	}
+
 	listCmd.Flags().String(FILTER_PRIORITY, "", "Filter tasks by priority")
 	listCmd.RegisterFlagCompletionFunc(
 		FILTER_PRIORITY,
@@ -214,15 +220,31 @@ func init() {
 	listCmd.Flags().String(
 		SORT_PRIORITY,
 		"",
-		fmt.Sprintf("Sort by  priority %s", strings.Join(allowedPriortySortValues, ",")),
+		fmt.Sprintf("Sort by  priority %s", strings.Join(allowedPrioritySortValues, ",")),
 	)
 	listCmd.RegisterFlagCompletionFunc(
 		SORT_PRIORITY,
 		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 
-			return allowedPriortySortValues, cobra.ShellCompDirectiveDefault
+			return allowedPrioritySortValues, cobra.ShellCompDirectiveDefault
 		},
 	)
 	listCmd.MarkFlagsMutuallyExclusive(SORT_PRIORITY, FILTER_PRIORITY)
 
+	return listCmd
+
+}
+
+func init() {
+
+	rootCmd.AddCommand(createListCommand())
+
+	// Here you will define your flags and configuration settings.
+
+	// Cobra supports Persistent Flags which will work for this command
+	// and all subcommands, e.g.:
+	// listCmd.PersistentFlags().String("foo", "", "A help for foo")
+
+	// Cobra supports local flags which will only run when this command
+	// is called directly, e.g.:
 }
