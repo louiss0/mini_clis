@@ -17,8 +17,6 @@ func executeCommand(cmd *cobra.Command, args ...string) (string, error) {
 
 	cmd.SetOut(buffer)
 
-	cmd.SetErr(buffer)
-
 	err := cmd.Execute()
 
 	return buffer.String(), err
@@ -70,7 +68,7 @@ func TestListCommand(t *testing.T) {
 
 		assert.Error(error)
 
-		assert.NotNil(output)
+		assert.Empty(output)
 
 	})
 
