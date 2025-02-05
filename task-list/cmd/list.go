@@ -186,6 +186,13 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	listCmd.Flags().String(FILTER_PRIORITY, "", "Filter tasks by priority")
+	listCmd.RegisterFlagCompletionFunc(
+		FILTER_PRIORITY,
+		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+
+			return task.AllowedProrities, cobra.ShellCompDirectiveDefault
+		},
+	)
 	listCmd.Flags().Bool(FILTER_COMPLETE, false, "Filter tasks by completed")
 	listCmd.Flags().Bool(FILTER_INCOMPLETE, false, "Filter tasks by incompleted")
 

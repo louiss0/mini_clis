@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mini-clis/task-list/custom_errors"
 	"github.com/samber/lo"
 )
 
@@ -32,21 +33,24 @@ func (self priority) Value() string {
 	return string(self)
 }
 
+var AllowedProrities = []string{
+	string(LOW),
+	string(HIGH),
+	string(MEDIUM),
+}
+
 func ParsePriority(input string) (priority, error) {
 
-	allowedProrities := []string{
-		string(LOW),
-		string(HIGH),
-		string(MEDIUM),
-	}
+	if !lo.Contains(AllowedProrities, input) {
 
-	if !lo.Contains(allowedProrities, input) {
-
-		return "", fmt.Errorf(
-			"Wrong option %s a priority is supposed to be %s",
-			input,
-			strings.Join(allowedProrities, ","),
-		)
+		return "", custom_errors.
+			CreateInvalidFlagErrorWithMessage(
+				fmt.Sprintf(
+					"Wrong option %s a priority is supposed to be %s",
+					input,
+					strings.Join(AllowedProrities, ","),
+				),
+			)
 	}
 
 	return priority(input), nil
