@@ -65,7 +65,9 @@ func TestListCommand(t *testing.T) {
 
 		output, error := executeCommand(rootCmd, "list", createFlag(FILTER_PRIORITY), "foo")
 
-		assert.NoError(error)
+		fmt.Println(output)
+
+		assert.Error(error)
 
 		assert.NotNil(output)
 
