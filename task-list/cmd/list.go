@@ -4,12 +4,12 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
 	"time"
 
-	"github.com/mini-clis/task-list/error_log"
 	"github.com/mini-clis/task-list/task"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -46,59 +46,60 @@ var listCmd = &cobra.Command{
 	Long: `Get a list of all the tasks that you need to do today.
 	You will see the
 	`,
-	Args: cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
+	Args:         cobra.NoArgs,
+	SilenceUsage: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		filterPriority, filterPriorityErr := cmd.Flags().GetString(FILTER_PRIORITY)
 
-		filterPriority := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
-			cmd.Flags().GetString(FILTER_PRIORITY),
+		filterComplete, filterCompleteError := cmd.Flags().GetBool(FILTER_COMPLETE)
+
+		filterIncomplete, filterIncompleteErr := cmd.Flags().GetBool(FILTER_INCOMPLETE)
+
+		sortDate, sortDateErr := cmd.Flags().GetString(SORT_DATE)
+
+		sortPriority, sortPriorityErr := cmd.Flags().GetString(SORT_PRIORITY)
+
+		flagError := errors.Join(
+			filterPriorityErr,
+			filterCompleteError,
+			filterIncompleteErr,
+			sortDateErr,
+			sortPriorityErr,
 		)
 
-		filterComplete := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
-			cmd.Flags().GetBool(FILTER_COMPLETE),
-		)
+		if flagError != nil {
+			return flagError
+		}
 
-		filterIncomplete := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
-			cmd.Flags().GetBool(FILTER_INCOMPLETE),
-		)
+		tasks, tasksErr := task.ReadTasks()
 
-		sortDate := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
-			cmd.Flags().GetString(SORT_DATE),
-		)
-
-		sortPriority := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
-			cmd.Flags().GetString(SORT_PRIORITY),
-		)
-
-		tasks := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(task.ReadTasks())
+		if tasksErr != nil {
+			return tasksErr
+		}
 
 		if sortPriority == HIGHEST {
-
 			slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
 				return a.Priority.Order() - b.Priority.Order()
 			})
-
 		}
 
 		if sortPriority == LOWEST {
-
 			slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
-
 				return b.Priority.Order() - a.Priority.Order()
 			})
-
 		}
 
 		if sortDate == LATEST {
-
 			slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
+				aTime, aTimeErr := time.Parse(time.UnixDate, a.CreatedAt())
+				if aTimeErr != nil {
+					return 0
+				}
 
-				aTime := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
-					time.Parse(time.UnixDate, a.CreatedAt()),
-				)
-
-				bTime := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
-					time.Parse(time.UnixDate, b.CreatedAt()),
-				)
+				bTime, bTimeErr := time.Parse(time.UnixDate, b.CreatedAt())
+				if bTimeErr != nil {
+					return 0
+				}
 
 				if aTime.After(bTime) {
 					return -1
@@ -108,74 +109,67 @@ var listCmd = &cobra.Command{
 				}
 				return 0
 			})
-
 		}
 
 		if sortDate == EARLIEST {
-
 			slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
+				aTime, aTimeErr := time.Parse(time.UnixDate, a.CreatedAt())
+				if aTimeErr != nil {
+					return 0
+				}
 
-				aTime := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
-					time.Parse(time.UnixDate, a.CreatedAt()),
-				)
-
-				bTime := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
-					time.Parse(time.UnixDate, b.CreatedAt()),
-				)
+				bTime, bTimeErr := time.Parse(time.UnixDate, b.CreatedAt())
+				if bTimeErr != nil {
+					return 0
+				}
 
 				if aTime.After(bTime) {
 					return 1
 				}
-
 				if bTime.After(aTime) {
 					return -1
 				}
-
 				return 0
 			})
-
 		}
 
 		if filterComplete {
-
 			tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
-
 				return item.Complete
 			})
-
 		}
 
 		if filterIncomplete {
-
 			tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
-
 				return !item.Complete
 			})
-
 		}
 
 		if filterPriority != "" {
+			priority, priorityErr := task.ParsePriority(filterPriority)
 
-			priority := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
-				task.ParsePriority(filterPriority),
-			)
+			if priorityErr != nil {
+				return priorityErr
+			}
 
 			tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
-
 				return item.Priority == priority
 			})
-
 		}
 
-		stringifiedTasks := error_log.ReturnValueIfErrorIsNotNilLogFatalIfError(
-			task.MarshallTasks(tasks),
-		)
+		stringifiedTasks, stringifiedTasksErr := task.MarshallTasks(tasks)
 
-		// fmt.Println("Here is the list of tasks you have to do")
+		if stringifiedTasksErr != nil {
+			return stringifiedTasksErr
+		}
+
+		fmt.Println("Here is the list of tasks you have to do")
 		fmt.Fprintln(
 			cmd.OutOrStdout(),
 			stringifiedTasks,
 		)
+
+		return nil
 
 	},
 }
