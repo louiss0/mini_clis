@@ -76,7 +76,14 @@ func TestListCommand(t *testing.T) {
 
 		output, error := executeCommand(rootCmd, "list", createFlag(SORT_DATE), "foo")
 
-		fmt.Println(output)
+		assert.Error(error)
+
+		assert.Empty(output)
+	})
+
+	t.Run("it errors when wrong sort-priority flag is passed", func(t *testing.T) {
+
+		output, error := executeCommand(rootCmd, "list", createFlag(SORT_PRIORITY), "boom")
 
 		assert.Error(error)
 
