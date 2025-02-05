@@ -204,12 +204,25 @@ func init() {
 		fmt.Sprintf("Sort by  date %s", strings.Join(allowedDateSortValues, ",")),
 	)
 
+	listCmd.RegisterFlagCompletionFunc(
+		SORT_DATE,
+		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+
+			return allowedDateSortValues, cobra.ShellCompDirectiveDefault
+		},
+	)
 	listCmd.Flags().String(
 		SORT_PRIORITY,
 		"",
 		fmt.Sprintf("Sort by  priority %s", strings.Join(allowedPriortySortValues, ",")),
 	)
+	listCmd.RegisterFlagCompletionFunc(
+		SORT_PRIORITY,
+		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 
+			return allowedPriortySortValues, cobra.ShellCompDirectiveDefault
+		},
+	)
 	listCmd.MarkFlagsMutuallyExclusive(SORT_PRIORITY, FILTER_PRIORITY)
 
 }
