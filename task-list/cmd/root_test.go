@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/mini-clis/task-list/custom_errors"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
@@ -38,21 +39,33 @@ var createFlag = func(flagName string) string {
 	return fmt.Sprintf("--%s", flagName)
 }
 
+var setupCommandsThenGetResetCommands = func(cmd *cobra.Command) func() {
+
+	if len(cmd.Commands()) == 0 {
+
+		lo.ForEach(
+			[]*cobra.Command{
+				createListCommand(),
+			},
+			func(command *cobra.Command, index int) {
+
+				cmd.AddCommand(command)
+			},
+		)
+
+	}
+
+	return func() {
+
+		cmd.ResetCommands()
+
+	}
+
+}
+
 func TestListCommand(t *testing.T) {
 
 	assert := assert.New(t)
-
-	setupListCommand := func(cmd *cobra.Command) func() {
-
-		cmd.AddCommand(createListCommand())
-
-		return func() {
-
-			cmd.ResetCommands()
-
-		}
-
-	}
 
 	t.Run("works", func(t *testing.T) {
 
@@ -76,7 +89,7 @@ func TestListCommand(t *testing.T) {
 
 	t.Run("it errors when filter-priority with wrong value is passed", func(t *testing.T) {
 
-		t.Cleanup(setupListCommand(rootCmd))
+		t.Cleanup(setupCommandsThenGetResetCommands(rootCmd))
 
 		output, error := executeCommand(rootCmd, "list", createFlag(FILTER_PRIORITY), "foo")
 
@@ -90,7 +103,7 @@ func TestListCommand(t *testing.T) {
 
 	t.Run("it errors when wrong sort-date is passed", func(t *testing.T) {
 
-		t.Cleanup(setupListCommand(rootCmd))
+		t.Cleanup(setupCommandsThenGetResetCommands(rootCmd))
 
 		output, error := executeCommand(rootCmd, "list", createFlag(SORT_DATE), "foo")
 
@@ -101,7 +114,7 @@ func TestListCommand(t *testing.T) {
 
 	t.Run("it errors when wrong sort-priority flag is passed", func(t *testing.T) {
 
-		t.Cleanup(setupListCommand(rootCmd))
+		t.Cleanup(setupCommandsThenGetResetCommands(rootCmd))
 
 		output, error := executeCommand(rootCmd, "list", createFlag(SORT_PRIORITY), "boom")
 
