@@ -41,7 +41,7 @@ const SORT_DATE = "sort-date"
 const SORT_PRIORITY = "sort-priority"
 
 // listCmd represents the list command
-func createListCommand() *cobra.Command {
+func CreateListCommand() *cobra.Command {
 
 	var listCmd = &cobra.Command{
 		Use:   "list",
@@ -260,6 +260,6 @@ func createListCommand() *cobra.Command {
 
 func init() {
 
-	rootCmd.AddCommand(createListCommand())
+	rootCmd.AddCommand(CreateListCommand())
 
 }
