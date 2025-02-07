@@ -9,6 +9,7 @@ import (
 
 	. "github.com/mini-clis/task-list/cmd"
 	"github.com/mini-clis/task-list/custom_errors"
+	"github.com/mini-clis/task-list/task"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -270,18 +271,33 @@ var _ = Describe("Cmd", func() {
 				},
 			)
 
-			PIt(
-				"filters tasks by the highest priority when the --filter-priority is passed 'highest'",
-				func() {
+			lo.ForEach([]string{
+				task.HIGH.Value(),
+				task.LOW.Value(),
+				task.MEDIUM.Value(),
+			},
+				func(priority string, index int) {
 
-				},
-			)
+					It(
+						fmt.Sprintf("filters tasks by the highest priority when the --filter-priority is passed %s", priority),
+						func() {
 
-			PIt("filters tasks by the highest priority when the --filter-priority is passed 'lowest'",
-				func() {
+							tasks, error := extractPersistedTasksFromOutput(executeCommand(rootCmd, "list", createFlag(FILTER_PRIORITY), priority))
 
-				},
-			)
+							assert.NoError(error)
+
+							assert.Greater(len(tasks), 1)
+
+							lo.EveryBy(tasks, func(task mockPersistedTask) bool {
+
+								return task.Priority == priority
+
+							})
+
+						},
+					)
+
+				})
 
 			PIt(
 				"filters only tasks that are complete when the --filter-incomplete flag is passed",
