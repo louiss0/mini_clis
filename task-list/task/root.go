@@ -109,7 +109,7 @@ type persistedTask struct {
 	Id          string   `json:"id"`
 	Title       string   `json:"title"`
 	Description string   `json:"description"`
-	Priority    priority `json:"string"`
+	Priority    priority `json:"priority"`
 	Complete    bool     `json:"complete"`
 	CreatedAt   string   `json:"createdAt"`
 	UpdatedAt   string   `json:"updatedAt"`
