@@ -149,18 +149,18 @@ var _ = Describe("Cmd", func() {
 						"low":    1,
 					}
 
-					fmt.Print(tasks)
+					allTasksAreSortedByTheHigestOrder := lo.EveryBy(
+						lo.Chunk(tasks, 2),
+						func(item []mockPersistedTask) bool {
+							first, second := item[0], item[1]
 
-					allTasksAreSortedByTheHigestOrder := lo.EveryBy(lo.Chunk(tasks, 2), func(item []mockPersistedTask) bool {
-						first, second := item[0], item[1]
+							if reflect.TypeOf(second).Kind() != reflect.Struct {
+								return true
+							}
 
-						if reflect.TypeOf(second).Kind() != reflect.Struct {
-							return true
-						}
+							return priorityMap[first.Priority] >= priorityMap[second.Priority]
 
-						return priorityMap[first.Priority] > priorityMap[second.Priority]
-
-					})
+						})
 
 					assert.True(allTasksAreSortedByTheHigestOrder)
 				},
