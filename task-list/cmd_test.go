@@ -299,16 +299,40 @@ var _ = Describe("Cmd", func() {
 
 				})
 
-			PIt(
-				"filters only tasks that are complete when the --filter-incomplete flag is passed",
+			It(
+				"filters only tasks that are complete when the --filter-complete flag is passed",
 				func() {
+					tasks, error := extractPersistedTasksFromOutput(executeCommand(rootCmd, "list", createFlag(FILTER_COMPLETE)))
+
+					assert.NoError(error)
+
+					allCompletedTasks := lo.EveryBy(
+						tasks,
+						func(item mockPersistedTask) bool {
+
+							return item.Complete == true
+						})
+
+					assert.True(allCompletedTasks)
 
 				})
 
-			PIt(
-				"filters only tasks that are incomplete whe the --filter-complete flag is passed",
+			It(
+				"filters only tasks that are incomplete whe the --filter-incomplete flag is passed",
 				func() {
 
+					tasks, error := extractPersistedTasksFromOutput(executeCommand(rootCmd, "list", createFlag(FILTER_INCOMPLETE)))
+
+					assert.NoError(error)
+
+					allIncompleteTasks := lo.EveryBy(
+						tasks,
+						func(item mockPersistedTask) bool {
+
+							return item.Complete == false
+						})
+
+					assert.True(allIncompleteTasks)
 				})
 
 		})
