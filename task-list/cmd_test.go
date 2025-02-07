@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	. "github.com/mini-clis/task-list/cmd"
 	"github.com/mini-clis/task-list/custom_errors"
+	"github.com/mini-clis/task-list/task"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -109,6 +111,63 @@ var _ = Describe("Cmd", func() {
 
 			},
 		)
+
+	})
+
+	Context("Organizing Tasks", Ordered, func() {
+
+		var fakeTasks []mockPersistedTask
+
+		BeforeAll(func() {
+
+			byte, error := os.ReadFile(task.TASK_LIST_STORAGE_PATH)
+
+			assert.NoError(error)
+
+			unmarshalError := json.Unmarshal(byte, &fakeTasks)
+
+			assert.NoError(unmarshalError)
+
+		})
+
+		PIt(
+			"sorts tasks by the ones that were inserted at the latest times when sort-date flag is passed 'latest'",
+			func() {
+
+			},
+		)
+
+		PIt(
+			"sorts tasks that by the ones that were inserted at the earliest times when sort-date flag is passed 'latest'",
+			func() {
+
+			},
+		)
+
+		PIt(
+			"filters tasks by the highest priority when the --filter-priority is passed 'highest'",
+			func() {
+
+			},
+		)
+
+		PIt("filters tasks by the highest priority when the --filter-priority is passed 'lowest'",
+			func() {
+
+			},
+		)
+
+		PIt(
+			"filters only tasks that are complete when the --filter-incomplete flag is passed",
+			func() {
+
+			})
+
+		PIt(
+			"filters only tasks that are incomplete whe the --filter-complete flag is passed",
+			func() {
+
+			})
 
 	})
 
