@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
+	"reflect"
+	"time"
 
 	. "github.com/mini-clis/task-list/cmd"
 	"github.com/mini-clis/task-list/custom_errors"
-	"github.com/mini-clis/task-list/task"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -71,6 +71,25 @@ var _ = Describe("Cmd", func() {
 
 	Context("List", func() {
 
+		extractPersistedTasksFromOutput := func(commandOutput string, error error) ([]mockPersistedTask, error) {
+
+			var tasks []mockPersistedTask
+
+			if error != nil {
+
+				return tasks, error
+			}
+
+			unmarshalError := json.Unmarshal([]byte(commandOutput), &tasks)
+
+			if error != nil {
+
+				return tasks, unmarshalError
+			}
+
+			return tasks, nil
+		}
+
 		It("works", func() {
 
 			output, error := executeCommand(rootCmd, "list")
@@ -86,88 +105,117 @@ var _ = Describe("Cmd", func() {
 			assert.Greater(len(tasks), 0)
 
 		})
-	})
 
-	lo.ForEach([]string{
-		FILTER_PRIORITY,
-		SORT_DATE,
-		SORT_PRIORITY,
-	}, func(item string, index int) {
+		lo.ForEach([]string{
+			FILTER_PRIORITY,
+			SORT_DATE,
+			SORT_PRIORITY,
+		}, func(item string, index int) {
 
-		It(
-			fmt.Sprintf("creates an error when wrong value is passed to %s", item),
-			func() {
+			It(
+				fmt.Sprintf("creates an error when wrong value is passed to %s", item),
+				func() {
 
-				output, error := executeCommand(
-					rootCmd,
-					"list",
-					createFlag(item),
-					"foo",
-				)
+					output, error := executeCommand(
+						rootCmd,
+						"list",
+						createFlag(item),
+						"foo",
+					)
 
-				assert.Empty(output)
+					assert.Empty(output)
 
-				assert.ErrorIs(error, custom_errors.InvalidFlag)
+					assert.ErrorIs(error, custom_errors.InvalidFlag)
 
-			},
-		)
-
-	})
-
-	Context("Organizing Tasks", Ordered, func() {
-
-		var fakeTasks []mockPersistedTask
-
-		BeforeAll(func() {
-
-			byte, error := os.ReadFile(task.TASK_LIST_STORAGE_PATH)
-
-			assert.NoError(error)
-
-			unmarshalError := json.Unmarshal(byte, &fakeTasks)
-
-			assert.NoError(unmarshalError)
+				},
+			)
 
 		})
 
-		PIt(
-			"sorts tasks by the ones that were inserted at the latest times when sort-date flag is passed 'latest'",
-			func() {
+		Context("Organizing Tasks", Ordered, func() {
 
-			},
-		)
+			It(
+				"sorts tasks that by the ones that were inserted at the earliest times when sort-priority flag is passed 'highest'",
+				func() {
 
-		PIt(
-			"sorts tasks that by the ones that were inserted at the earliest times when sort-date flag is passed 'latest'",
-			func() {
+				},
+			)
 
-			},
-		)
+			PIt(
+				"sorts tasks by the ones that were inserted at the latest times when sort-priority flag is passed 'lowest'",
+				func() {
 
-		PIt(
-			"filters tasks by the highest priority when the --filter-priority is passed 'highest'",
-			func() {
+				},
+			)
 
-			},
-		)
+			PIt(
+				"sorts tasks that by the ones that were inserted at the earliest times when sort-date flag is passed 'latest'",
+				func() {
 
-		PIt("filters tasks by the highest priority when the --filter-priority is passed 'lowest'",
-			func() {
+					tasks, error := extractPersistedTasksFromOutput(executeCommand(rootCmd, "list", createFlag(SORT_PRIORITY), LATEST))
 
-			},
-		)
+					assert.Error(error)
 
-		PIt(
-			"filters only tasks that are complete when the --filter-incomplete flag is passed",
-			func() {
+					assert.Greater(len(tasks), 1)
 
-			})
+					allTasksAreSortedByTheHigestOrder := lo.EveryBy(lo.Chunk(tasks, 2), func(item []mockPersistedTask) bool {
+						first, second := item[0], item[1]
 
-		PIt(
-			"filters only tasks that are incomplete whe the --filter-complete flag is passed",
-			func() {
+						if reflect.TypeOf(second).Kind() != reflect.Struct {
+							return true
+						}
 
-			})
+						firstCreatedTime, firstCreatedError := time.Parse(time.UnixDate, first.CreatedAt)
+
+						secondCreatedTime, secondCreatedError := time.Parse(time.UnixDate, second.CreatedAt)
+
+						if firstCreatedError != nil || secondCreatedError != nil {
+
+							return false
+						}
+
+						return firstCreatedTime.After(secondCreatedTime)
+
+					})
+
+					assert.True(allTasksAreSortedByTheHigestOrder)
+
+				},
+			)
+
+			PIt(
+				"sorts tasks by the ones that were inserted at the latest times when sort-date flag is passed 'latest'",
+				func() {
+
+				},
+			)
+
+			PIt(
+				"filters tasks by the highest priority when the --filter-priority is passed 'highest'",
+				func() {
+
+				},
+			)
+
+			PIt("filters tasks by the highest priority when the --filter-priority is passed 'lowest'",
+				func() {
+
+				},
+			)
+
+			PIt(
+				"filters only tasks that are complete when the --filter-incomplete flag is passed",
+				func() {
+
+				})
+
+			PIt(
+				"filters only tasks that are incomplete whe the --filter-complete flag is passed",
+				func() {
+
+				})
+
+		})
 
 	})
 
