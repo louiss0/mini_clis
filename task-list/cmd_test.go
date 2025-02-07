@@ -133,7 +133,7 @@ var _ = Describe("Cmd", func() {
 
 		})
 
-		Context("Organizing Tasks", Ordered, func() {
+		Context("Organizing Tasks", func() {
 
 			It(
 				"sorts tasks that by the ones that were inserted at the earliest times when sort-priority flag is passed 'highest'",
