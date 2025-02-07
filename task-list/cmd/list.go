@@ -96,13 +96,13 @@ func CreateListCommand() *cobra.Command {
 
 			if sortPriority == HIGHEST {
 				slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
-					return a.Priority.Order() - b.Priority.Order()
+					return b.Priority.Order() - a.Priority.Order()
 				})
 			}
 
 			if sortPriority == LOWEST {
 				slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
-					return b.Priority.Order() - a.Priority.Order()
+					return a.Priority.Order() - b.Priority.Order()
 				})
 			}
 
