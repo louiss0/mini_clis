@@ -166,9 +166,36 @@ var _ = Describe("Cmd", func() {
 				},
 			)
 
-			PIt(
+			It(
 				"sorts tasks by the ones that were inserted at the latest times when sort-priority flag is passed 'lowest'",
 				func() {
+
+					tasks, error := extractPersistedTasksFromOutput(executeCommand(rootCmd, "list", createFlag(SORT_PRIORITY), LOWEST))
+
+					assert.NoError(error)
+
+					assert.Greater(len(tasks), 1)
+
+					priorityMap := map[string]int{
+						"high":   3,
+						"medium": 2,
+						"low":    1,
+					}
+
+					allTasksAreSortedByTheLowestOrder := lo.EveryBy(
+						lo.Chunk(tasks, 2),
+						func(item []mockPersistedTask) bool {
+							first, second := item[0], item[1]
+
+							if reflect.TypeOf(second).Kind() != reflect.Struct {
+								return true
+							}
+
+							return priorityMap[first.Priority] <= priorityMap[second.Priority]
+
+						})
+
+					assert.True(allTasksAreSortedByTheLowestOrder)
 
 				},
 			)
