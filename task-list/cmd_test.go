@@ -200,13 +200,13 @@ var _ = Describe("Cmd", func() {
 				},
 			)
 
-			PIt(
+			It(
 				"sorts tasks that by the ones that were inserted at the earliest times when sort-date flag is passed 'latest'",
 				func() {
 
-					tasks, error := extractPersistedTasksFromOutput(executeCommand(rootCmd, "list", createFlag(SORT_PRIORITY), LATEST))
+					tasks, error := extractPersistedTasksFromOutput(executeCommand(rootCmd, "list", createFlag(SORT_DATE), LATEST))
 
-					assert.Error(error)
+					assert.NoError(error)
 
 					assert.Greater(len(tasks), 1)
 
@@ -235,9 +235,37 @@ var _ = Describe("Cmd", func() {
 				},
 			)
 
-			PIt(
-				"sorts tasks by the ones that were inserted at the latest times when sort-date flag is passed 'latest'",
+			It(
+				"sorts tasks by the ones that were inserted at the latest times when sort-date flag is passed 'earliest'",
 				func() {
+
+					tasks, error := extractPersistedTasksFromOutput(executeCommand(rootCmd, "list", createFlag(SORT_DATE), EARLIEST))
+
+					assert.NoError(error)
+
+					assert.Greater(len(tasks), 1)
+
+					allTasksAreSortedByTheHigestOrder := lo.EveryBy(lo.Chunk(tasks, 2), func(item []mockPersistedTask) bool {
+						first, second := item[0], item[1]
+
+						if reflect.TypeOf(second).Kind() != reflect.Struct {
+							return true
+						}
+
+						firstCreatedTime, firstCreatedError := time.Parse(time.UnixDate, first.CreatedAt)
+
+						secondCreatedTime, secondCreatedError := time.Parse(time.UnixDate, second.CreatedAt)
+
+						if firstCreatedError != nil || secondCreatedError != nil {
+
+							return false
+						}
+
+						return firstCreatedTime.Before(secondCreatedTime)
+
+					})
+
+					assert.True(allTasksAreSortedByTheHigestOrder)
 
 				},
 			)
