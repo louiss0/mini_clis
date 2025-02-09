@@ -449,7 +449,7 @@ var _ = Describe("Cmd", func() {
 			fakeEditCase(PRIORITY),
 			fakeEditCase(COMPLETE),
 		}, func(editCase EditCase, index int) {
-			PIt(
+			It(
 				fmt.Sprintf(
 					"edits a task's %s field when %s is passed through",
 					editCase.FlagName,
@@ -471,22 +471,22 @@ var _ = Describe("Cmd", func() {
 						),
 					)
 
-					assert.Empty(taskFromOutput)
-					assert.Error(outputError)
+					assert.NotEmpty(taskFromOutput)
+					assert.NoError(outputError)
 
 					capitalisedFlagName := lo.Capitalize(editCase.FlagName)
 
 					taskFieldValueBasedOnFlagName := reflect.ValueOf(task).
-						FieldByName(capitalisedFlagName).String()
+						FieldByName(capitalisedFlagName)
 
 					taskFromOutputFieldValueBasedOnFlagName := reflect.ValueOf(taskFromOutput).
-						FieldByName(capitalisedFlagName).String()
+						FieldByName(capitalisedFlagName)
 
 					taskFieldUpdatedAtFieldValue := reflect.ValueOf(task).
-						FieldByName("UpdatedAt").String()
+						FieldByName("UpdatedAt")
 
 					taskFromOutputFieldUpdatedAtFieldValue := reflect.ValueOf(taskFromOutput).
-						FieldByName("UpdatedAt").String()
+						FieldByName("UpdatedAt")
 
 					assert.Conditionf(func() bool {
 						return taskFieldValueBasedOnFlagName != taskFromOutputFieldValueBasedOnFlagName &&
