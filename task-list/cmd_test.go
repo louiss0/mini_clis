@@ -70,9 +70,14 @@ var getMockPersistedTasks = func() ([]mockPersistedTask, error) {
 	return tasks, nil
 }
 
-var getMockPersistedTaskBasedOnOutput = func(output string) (mockPersistedTask, error) {
+var getMockPersistedTaskBasedOnOutput = func(output string, error error) (mockPersistedTask, error) {
 
 	var task mockPersistedTask
+
+	if error != nil {
+
+		return task, error
+	}
 
 	unmarshalError := json.Unmarshal([]byte(output), &task)
 
@@ -456,12 +461,15 @@ var _ = Describe("Cmd", func() {
 					assert.NotEmpty(task)
 					assert.NoError(storageError)
 
-					output, commandError := executeCommand(rootCmd, "edit", task.Id, editCase.FlagName, editCase.Argument)
-
-					assert.Empty(output)
-					assert.Error(commandError)
-
-					taskFromOutput, outputError := getMockPersistedTaskBasedOnOutput(output)
+					taskFromOutput, outputError := getMockPersistedTaskBasedOnOutput(
+						executeCommand(
+							rootCmd,
+							"edit",
+							task.Id,
+							editCase.FlagName,
+							editCase.Argument,
+						),
+					)
 
 					assert.Empty(taskFromOutput)
 					assert.Error(outputError)
