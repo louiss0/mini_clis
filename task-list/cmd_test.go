@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math/rand"
+	"os"
 	"reflect"
 	"time"
 
+	"github.com/brianvoe/gofakeit/v7"
 	. "github.com/mini-clis/task-list/cmd"
 	"github.com/mini-clis/task-list/custom_errors"
 	"github.com/mini-clis/task-list/task"
@@ -47,6 +50,57 @@ var createFlag = func(flagName string) string {
 	return fmt.Sprintf("--%s", flagName)
 }
 
+var getMockPersistedTasks = func() ([]mockPersistedTask, error) {
+
+	var tasks []mockPersistedTask
+
+	output, error := os.ReadFile(task.TASK_LIST_STORAGE_PATH)
+
+	if error != nil {
+		return tasks, error
+	}
+
+	unmarshalError := json.Unmarshal(output, &tasks)
+
+	if unmarshalError != nil {
+		return tasks, unmarshalError
+	}
+
+	return tasks, nil
+}
+
+var getMockPersistedTaskBasedOnOutput = func(output string) (mockPersistedTask, error) {
+
+	var task mockPersistedTask
+
+	unmarshalError := json.Unmarshal([]byte(output), &task)
+
+	if unmarshalError != nil {
+		return task, unmarshalError
+	}
+
+	return task, nil
+}
+
+var getRandomTaskFromStorage = func() (mockPersistedTask, error) {
+
+	tasks, error := getMockPersistedTasks()
+
+	if error != nil {
+		return mockPersistedTask{}, error
+	}
+
+	if len(tasks) == 0 {
+		return mockPersistedTask{}, fmt.Errorf("There are no tasks in the storage")
+	}
+
+	randomNumberBasedOnTaskLength := rand.New(rand.NewSource(time.Now().UnixNano())).
+		Intn(len(tasks))
+
+	return tasks[randomNumberBasedOnTaskLength], nil
+
+}
+
 var _ = Describe("Cmd", func() {
 
 	assert := assert.New(GinkgoT())
@@ -58,6 +112,7 @@ var _ = Describe("Cmd", func() {
 		if len(rootCmd.Commands()) == 0 {
 			rootCmd.AddCommand(
 				CreateListCommand(),
+				CreateEditCmd(),
 			)
 
 		}
@@ -333,6 +388,83 @@ var _ = Describe("Cmd", func() {
 						})
 
 					assert.True(allIncompleteTasks)
+				})
+
+		})
+
+	})
+
+	Context("Editing tasks", func() {
+
+		type EditCase struct {
+			FlagName string
+			Argument string
+		}
+
+		fakeEditCase := func(flagName string) EditCase {
+
+			return lo.Switch[string, EditCase](flagName).
+				Case(TITLE,
+					EditCase{
+						TITLE,
+						gofakeit.Sentence(gofakeit.Number(1, 16)),
+					},
+				).
+				Case(
+					DESCRIPTION,
+					EditCase{
+						DESCRIPTION,
+						gofakeit.Paragraph(1, gofakeit.Number(3, 11), gofakeit.Number(1, 16), " "),
+					},
+				).
+				Case(
+					PRIORITY,
+					EditCase{
+						PRIORITY,
+						gofakeit.RandomString(task.AllowedProrities),
+					},
+				).
+				Case(
+					COMPLETE,
+					EditCase{
+						COMPLETE,
+						gofakeit.RandomString([]string{
+							"true",
+							"false",
+						}),
+					}).
+				Default(EditCase{})
+
+		}
+
+		lo.ForEach([]EditCase{
+			fakeEditCase(TITLE),
+			fakeEditCase(DESCRIPTION),
+			fakeEditCase(PRIORITY),
+			fakeEditCase(COMPLETE),
+		}, func(editCase EditCase, index int) {
+			PIt(
+				fmt.Sprintf(
+					"edits a task's %s field when %s is passed through",
+					editCase.FlagName,
+					createFlag(editCase.FlagName)),
+				func() {
+
+					task, storageError := getRandomTaskFromStorage()
+
+					assert.NotEmpty(task)
+					assert.NoError(storageError)
+
+					output, commandError := executeCommand(rootCmd, "edit", task.Id, editCase.FlagName, editCase.Argument)
+
+					assert.Empty(output)
+					assert.Error(commandError)
+
+					taskFromOutput, outputError := getMockPersistedTaskBasedOnOutput(output)
+
+					assert.Empty(taskFromOutput)
+					assert.Error(outputError)
+
 				})
 
 		})

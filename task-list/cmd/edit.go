@@ -16,8 +16,8 @@ const (
 	COMPLETE    = "complete"
 )
 
-// createEditCmd represents the creation of the  edit command
-var createEditCmd = func() *cobra.Command {
+// CreateEditCmd represents the creation of the  edit command
+var CreateEditCmd = func() *cobra.Command {
 
 	editCommand := &cobra.Command{
 		Use:   "edit",
@@ -38,7 +38,7 @@ var createEditCmd = func() *cobra.Command {
 }
 
 func init() {
-	rootCmd.AddCommand(createEditCmd())
+	rootCmd.AddCommand(CreateEditCmd())
 
 	// Here you will define your flags and configuration settings.
 
