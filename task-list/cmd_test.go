@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
@@ -464,6 +465,40 @@ var _ = Describe("Cmd", func() {
 
 					assert.Empty(taskFromOutput)
 					assert.Error(outputError)
+
+					capitalisedFlagName := lo.Capitalize(editCase.FlagName)
+
+					taskFieldValueBasedOnFlagName := reflect.ValueOf(task).
+						FieldByName(capitalisedFlagName).String()
+
+					taskFromOutputFieldValueBasedOnFlagName := reflect.ValueOf(taskFromOutput).
+						FieldByName(capitalisedFlagName).String()
+
+					taskFieldUpdatedAtFieldValue := reflect.ValueOf(task).
+						FieldByName("UpdatedAt").String()
+
+					taskFromOutputFieldUpdatedAtFieldValue := reflect.ValueOf(taskFromOutput).
+						FieldByName("UpdatedAt").String()
+
+					assert.Conditionf(func() bool {
+						return taskFieldValueBasedOnFlagName != taskFromOutputFieldValueBasedOnFlagName &&
+							taskFieldUpdatedAtFieldValue != taskFromOutputFieldUpdatedAtFieldValue
+					},
+						strings.Join(
+							[]string{
+								"The value of the updatedAt field from a task in storage is only supposed to change when the the value a field changes",
+								"%s before %s vs %s after %s",
+								"Updated At Field Before %s vs Updated At Field After %s",
+							},
+							"\n",
+						),
+						capitalisedFlagName,
+						taskFieldValueBasedOnFlagName,
+						capitalisedFlagName,
+						taskFromOutputFieldValueBasedOnFlagName,
+						taskFieldUpdatedAtFieldValue,
+						taskFromOutputFieldUpdatedAtFieldValue,
+					)
 
 				})
 
