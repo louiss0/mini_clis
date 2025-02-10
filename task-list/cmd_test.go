@@ -458,21 +458,21 @@ var _ = Describe("Cmd", func() {
 
 					task, storageError := getRandomTaskFromStorage()
 
-					assert.NotEmpty(task)
 					assert.NoError(storageError)
+					assert.NotEmpty(task)
 
 					taskFromOutput, outputError := getMockPersistedTaskBasedOnOutput(
 						executeCommand(
 							rootCmd,
 							"edit",
 							task.Id,
-							editCase.FlagName,
+							createFlag(editCase.FlagName),
 							editCase.Argument,
 						),
 					)
 
-					assert.NotEmpty(taskFromOutput)
 					assert.NoError(outputError)
+					assert.NotEmpty(taskFromOutput)
 
 					capitalisedFlagName := lo.Capitalize(editCase.FlagName)
 
@@ -492,6 +492,7 @@ var _ = Describe("Cmd", func() {
 						return taskFieldValueBasedOnFlagName != taskFromOutputFieldValueBasedOnFlagName &&
 							taskFieldUpdatedAtFieldValue != taskFromOutputFieldUpdatedAtFieldValue
 					},
+
 						strings.Join(
 							[]string{
 								"The value of the updatedAt field from a task in storage is only supposed to change when the the value a field changes",

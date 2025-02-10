@@ -105,6 +105,21 @@ func (self Task) UpdatedAtAsUnixDateFormat() string {
 	return self.UpdatedAt.Format(time.UnixDate)
 }
 
+func (self Task) ToJSON() (string, error) {
+
+	byte, error := json.Marshal(persistedTask{
+		Id:          self.id,
+		Title:       self.Title,
+		Description: self.Description,
+		Priority:    self.Priority,
+		Complete:    self.Complete,
+		CreatedAt:   self.CreatedAt(),
+		UpdatedAt:   self.UpdatedAtAsUnixDateFormat(),
+	})
+
+	return string(byte), error
+}
+
 type persistedTask struct {
 	Id          string   `json:"id"`
 	Title       string   `json:"title"`
