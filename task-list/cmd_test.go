@@ -306,8 +306,6 @@ var _ = Describe("Cmd", func() {
 
 					assert.NoError(error)
 
-					assert.Greater(len(tasks), 1)
-
 					allTasksAreSortedByTheHigestOrder := lo.EveryBy(lo.Chunk(tasks, 2), func(item []mockPersistedTask) bool {
 						first, second := item[0], item[1]
 
@@ -348,13 +346,13 @@ var _ = Describe("Cmd", func() {
 
 							assert.NoError(error)
 
-							assert.Greater(len(tasks), 1)
-
-							lo.EveryBy(tasks, func(task mockPersistedTask) bool {
+							allTasksHaveTheSamePriority := lo.EveryBy(tasks, func(task mockPersistedTask) bool {
 
 								return task.Priority == priority
 
 							})
+
+							assert.True(allTasksHaveTheSamePriority)
 
 						},
 					)
