@@ -96,7 +96,12 @@ var CreateEditCmd = func() *cobra.Command {
 			}
 
 			if priority != "" {
-				parsedPriority, _ := task.ParsePriority(priority)
+				parsedPriority, error := task.ParsePriority(priority)
+
+				if error != nil {
+					return error
+				}
+
 				foundTask.Priority = parsedPriority
 				foundTask.UpdatedAt = time.Now()
 
@@ -104,7 +109,11 @@ var CreateEditCmd = func() *cobra.Command {
 
 			if complete != "" {
 
-				parsedBool, _ := strconv.ParseBool(complete)
+				parsedBool, error := strconv.ParseBool(complete)
+
+				if error != nil {
+					return error
+				}
 
 				foundTask.Complete = parsedBool
 				foundTask.UpdatedAt = time.Now()
