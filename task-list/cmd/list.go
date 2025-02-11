@@ -186,6 +186,13 @@ func CreateListCommand() *cobra.Command {
 				tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
 					return item.Priority == priority
 				})
+
+				if len(tasks) == 0 {
+
+					fmt.Printf("There are no tasks with this proirity %s", priority)
+
+					return nil
+				}
 			}
 
 			stringifiedTasks, stringifiedTasksErr := task.MarshallTasks(tasks)
