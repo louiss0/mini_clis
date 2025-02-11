@@ -401,7 +401,17 @@ var _ = Describe("Cmd", func() {
 
 	})
 
-	Context("Editing tasks", func() {
+	Context("Editing tasks", Ordered, func() {
+
+		var mockTask mockPersistedTask
+		BeforeEach(func() {
+			storageTask, storageError := getRandomTaskFromStorage()
+
+			mockTask = storageTask
+			assert.NoError(storageError)
+			assert.NotEmpty(storageTask)
+
+		})
 
 		type EditCase struct {
 			FlagName string
@@ -457,16 +467,11 @@ var _ = Describe("Cmd", func() {
 					createFlag(editCase.FlagName)),
 				func() {
 
-					task, storageError := getRandomTaskFromStorage()
-
-					assert.NoError(storageError)
-					assert.NotEmpty(task)
-
 					taskFromOutput, outputError := getMockPersistedTaskBasedOnOutput(
 						executeCommand(
 							rootCmd,
 							"edit",
-							task.Id,
+							mockTask.Id,
 							createFlag(editCase.FlagName),
 							editCase.Argument,
 						),
@@ -477,17 +482,15 @@ var _ = Describe("Cmd", func() {
 
 					capitalisedFlagName := lo.Capitalize(editCase.FlagName)
 
-					taskFieldValueBasedOnFlagName := reflect.ValueOf(task).
+					taskFieldValueBasedOnFlagName := reflect.ValueOf(mockTask).
 						FieldByName(capitalisedFlagName)
 
 					taskFromOutputFieldValueBasedOnFlagName := reflect.ValueOf(taskFromOutput).
 						FieldByName(capitalisedFlagName)
 
-					fmt.Print(task.UpdatedAt, taskFromOutput.UpdatedAt)
-
 					assert.Conditionf(func() bool {
 						return taskFieldValueBasedOnFlagName != taskFromOutputFieldValueBasedOnFlagName &&
-							task.UpdatedAt != taskFromOutput.UpdatedAt
+							mockTask.UpdatedAt != taskFromOutput.UpdatedAt
 					},
 
 						strings.Join(
@@ -502,11 +505,44 @@ var _ = Describe("Cmd", func() {
 						taskFieldValueBasedOnFlagName,
 						capitalisedFlagName,
 						taskFromOutputFieldValueBasedOnFlagName,
-						task.UpdatedAt,
+						mockTask.UpdatedAt,
 						taskFromOutput.UpdatedAt,
 					)
 
 				})
+
+		})
+
+		It("errors when --priority is passed the wrong value", func() {
+
+			taskFromOutput, outputError := getMockPersistedTaskBasedOnOutput(
+				executeCommand(
+					rootCmd,
+					"edit",
+					mockTask.Id,
+					createFlag(PRIORITY),
+					"beem boom boom boom bop bam!",
+				),
+			)
+
+			assert.Error(outputError)
+			assert.Empty(taskFromOutput)
+
+		})
+
+		It("errors when --complete is passed the wrong value", func() {
+			taskFromOutput, outputError := getMockPersistedTaskBasedOnOutput(
+				executeCommand(
+					rootCmd,
+					"edit",
+					mockTask.Id,
+					createFlag(COMPLETE),
+					"beem boom boom boom bop bam!",
+				),
+			)
+
+			assert.Error(outputError)
+			assert.Empty(taskFromOutput)
 
 		})
 
