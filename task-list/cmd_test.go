@@ -557,6 +557,21 @@ var _ = Describe("Cmd", func() {
 
 		})
 
+		Context("Adding tasks", func() {
+
+			It("works", func() {
+
+				task, error := getMockPersistedTaskBasedOnOutput(
+					executeCommand(rootCmd, "add", "Clean Room"),
+				)
+
+				assert.NoError(error)
+				assert.NotEmpty(task)
+
+			})
+
+		})
+
 	})
 
 })
