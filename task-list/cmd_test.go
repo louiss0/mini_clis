@@ -404,7 +404,8 @@ var _ = Describe("Cmd", func() {
 	Context("Editing tasks", Ordered, func() {
 
 		var mockTask mockPersistedTask
-		BeforeEach(func() {
+
+		BeforeAll(func() {
 			storageTask, storageError := getRandomTaskFromStorage()
 
 			mockTask = storageTask
@@ -483,16 +484,19 @@ var _ = Describe("Cmd", func() {
 					capitalisedFlagName := lo.Capitalize(editCase.FlagName)
 
 					taskFieldValueBasedOnFlagName := reflect.ValueOf(mockTask).
-						FieldByName(capitalisedFlagName)
+						FieldByName(capitalisedFlagName).Interface()
 
 					taskFromOutputFieldValueBasedOnFlagName := reflect.ValueOf(taskFromOutput).
-						FieldByName(capitalisedFlagName)
+						FieldByName(capitalisedFlagName).Interface()
 
 					assert.Conditionf(func() bool {
-						return taskFieldValueBasedOnFlagName != taskFromOutputFieldValueBasedOnFlagName &&
-							mockTask.UpdatedAt != taskFromOutput.UpdatedAt
-					},
 
+						return lo.Ternary(
+							taskFieldValueBasedOnFlagName != taskFromOutputFieldValueBasedOnFlagName,
+							mockTask.UpdatedAt != taskFromOutput.UpdatedAt,
+							mockTask.UpdatedAt == taskFromOutput.UpdatedAt,
+						)
+					},
 						strings.Join(
 							[]string{
 								"The value of the updatedAt field from a task in storage is only supposed to change when the the value a field changes",
