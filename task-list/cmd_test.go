@@ -88,13 +88,7 @@ var getMockPersistedTaskBasedOnOutput = func(output string, error error) (mockPe
 	return task, nil
 }
 
-var getRandomTaskFromStorage = func() (mockPersistedTask, error) {
-
-	tasks, error := getMockPersistedTasks()
-
-	if error != nil {
-		return mockPersistedTask{}, error
-	}
+var getRandomTaskPersistedTasks = func(tasks []mockPersistedTask) (mockPersistedTask, error) {
 
 	if len(tasks) == 0 {
 		return mockPersistedTask{}, fmt.Errorf("There are no tasks in the storage")
@@ -401,10 +395,25 @@ var _ = Describe("Cmd", func() {
 
 	Context("Editing tasks", Ordered, func() {
 
-		var mockTask mockPersistedTask
+		var mockTasks []mockPersistedTask
 
 		BeforeAll(func() {
-			storageTask, storageError := getRandomTaskFromStorage()
+
+			tasks, error := getMockPersistedTasks()
+
+			assert.NoError(error)
+
+			assert.NotEmpty(tasks)
+
+			mockTasks = tasks
+
+		})
+
+		var mockTask mockPersistedTask
+
+		BeforeEach(func() {
+
+			storageTask, storageError := getRandomTaskPersistedTasks(mockTasks)
 
 			mockTask = storageTask
 			assert.NoError(storageError)
