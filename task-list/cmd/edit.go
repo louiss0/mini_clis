@@ -4,7 +4,10 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/mini-clis/task-list/custom_errors"
 	"github.com/mini-clis/task-list/task"
@@ -42,7 +45,7 @@ var CreateEditCmd = func() *cobra.Command {
 				return error
 			}
 
-			task, ok := lo.Find(tasks, func(task task.Task) bool {
+			foundTask, ok := lo.Find(tasks, func(task task.Task) bool {
 
 				return task.Id() == id
 
@@ -58,38 +61,60 @@ var CreateEditCmd = func() *cobra.Command {
 
 			}
 
-			// complete, error := cmd.Flags().GetString(COMPLETE)
+			complete, completeError := cmd.Flags().GetString(COMPLETE)
 
-			// if error != nil {
-			// 	return error
-			// }
+			title, titleError := cmd.Flags().GetString(TITLE)
 
-			// title, error := cmd.Flags().GetString(TITLE)
+			description, descriptionError := cmd.Flags().GetString(DESCRIPTION)
 
-			// if error != nil {
-			// 	return error
-			// }
+			priority, priorityError := cmd.Flags().GetString(PRIORITY)
 
-			// description, error := cmd.Flags().GetString(DESCRIPTION)
+			flagErrors := errors.Join(
+				titleError,
+				completeError,
+				descriptionError,
+				priorityError,
+			)
 
-			// if error != nil {
-			// 	return error
-			// }
+			if flagErrors != nil {
 
-			// priority, error := cmd.Flags().GetString(PRIORITY)
+				return custom_errors.CreateInvalidFlagErrorWithMessage(
+					flagErrors.Error(),
+				)
+			}
 
-			// if error != nil {
-			// 	return error
-			// }
-			//
+			if title != "" {
 
-			taskAsJSON, error := task.ToJSON()
+				foundTask.Title = title
+				foundTask.UpdatedAt = time.Now()
+			}
+
+			if description != "" {
+				foundTask.Description = description
+				foundTask.UpdatedAt = time.Now()
+
+			}
+
+			if priority != "" {
+				parsedPriority, _ := task.ParsePriority(priority)
+				foundTask.Priority = parsedPriority
+				foundTask.UpdatedAt = time.Now()
+
+			}
+
+			if complete != "" {
+
+				parsedBool, _ := strconv.ParseBool(complete)
+
+				foundTask.Complete = parsedBool
+				foundTask.UpdatedAt = time.Now()
+			}
+
+			taskAsJSON, error := foundTask.ToJSON()
 
 			if error != nil {
 				return error
 			}
-
-			// fmt.Print(taskAsJSON)
 
 			fmt.Printf("Here is the task %s\n", id)
 			fmt.Fprintln(

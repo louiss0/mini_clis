@@ -5,8 +5,8 @@
     "description": "Implement unit tests for the new feature",
     "priority": "high",
     "complete": true,
-    "createdAt": "Mon Feb  4 12:34:56 UTC 2025",
-    "updatedAt": "Mon Feb  4 14:00:00 UTC 2025"
+    "createdAt": "2025-02-04",
+    "updatedAt": "2025-02-04"
   },
   {
     "id": "xP9mAqL1kV",
@@ -14,8 +14,8 @@
     "description": "Resolve issue with data race in worker pool",
     "priority": "medium",
     "complete": false,
-    "createdAt": "Sun Feb  3 09:12:45 UTC 2025",
-    "updatedAt": "Sun Feb  3 09:30:00 UTC 2025"
+    "createdAt": "2025-02-03",
+    "updatedAt": "2025-02-03"
   },
   {
     "id": "wY7zJX5nB2",
@@ -23,8 +23,8 @@
     "description": "Revise the API documentation to reflect recent changes",
     "priority": "low",
     "complete": true,
-    "createdAt": "Sat Feb  2 15:20:30 UTC 2025",
-    "updatedAt": "Sat Feb  2 16:00:00 UTC 2025"
+    "createdAt": "2025-02-02",
+    "updatedAt": "2025-02-02"
   },
   {
     "id": "rD3qT8mLZv",
@@ -32,8 +32,8 @@
     "description": "Improve performance of critical SQL queries",
     "priority": "high",
     "complete": false,
-    "createdAt": "Fri Feb  1 08:00:00 UTC 2025",
-    "updatedAt": "Fri Feb  1 08:15:00 UTC 2025"
+    "createdAt": "2025-02-01",
+    "updatedAt": "2025-02-01"
   },
   {
     "id": "aK5X9PmLwJ",
@@ -41,8 +41,8 @@
     "description": "Simplify and modularize CLI command handling",
     "priority": "medium",
     "complete": true,
-    "createdAt": "Thu Jan 31 17:45:30 UTC 2025",
-    "updatedAt": "Thu Jan 31 18:10:00 UTC 2025"
+    "createdAt": "2025-01-31",
+    "updatedAt": "2025-01-31"
   },
   {
     "id": "mL1T9XqP8D",
@@ -50,8 +50,8 @@
     "description": "Go through the latest pull request and provide feedback",
     "priority": "low",
     "complete": false,
-    "createdAt": "Wed Jan 30 14:22:10 UTC 2025",
-    "updatedAt": "Wed Jan 30 15:00:00 UTC 2025"
+    "createdAt": "2025-01-30",
+    "updatedAt": "2025-01-30"
   },
   {
     "id": "zQ2T3GkF4D",
@@ -59,8 +59,8 @@
     "description": "Summarize changes and updates for the upcoming release",
     "priority": "high",
     "complete": true,
-    "createdAt": "Tue Jan 29 10:05:45 UTC 2025",
-    "updatedAt": "Tue Jan 29 11:00:00 UTC 2025"
+    "createdAt": "2025-01-29",
+    "updatedAt": "2025-01-29"
   },
   {
     "id": "X5PmLwJ9T8",
@@ -68,8 +68,8 @@
     "description": "Add structured logging for debugging and monitoring",
     "priority": "medium",
     "complete": false,
-    "createdAt": "Mon Jan 28 12:30:00 UTC 2025",
-    "updatedAt": "Mon Jan 28 13:00:00 UTC 2025"
+    "createdAt": "2025-01-28",
+    "updatedAt": "2025-01-28"
   },
   {
     "id": "9mL1T8XqPD",
@@ -77,8 +77,8 @@
     "description": "Run go get -u on project dependencies",
     "priority": "low",
     "complete": true,
-    "createdAt": "Sun Jan 27 09:50:20 UTC 2025",
-    "updatedAt": "Sun Jan 27 10:30:00 UTC 2025"
+    "createdAt": "2025-01-27",
+    "updatedAt": "2025-01-27"
   },
   {
     "id": "JX5PmL9T8w",
@@ -86,7 +86,7 @@
     "description": "Analyze heap dumps and find memory leak source",
     "priority": "high",
     "complete": false,
-    "createdAt": "Sat Jan 26 14:00:00 UTC 2025",
-    "updatedAt": "Sat Jan 26 14:30:00 UTC 2025"
+    "createdAt": "2025-01-26",
+    "updatedAt": "2025-01-26"
   }
 ]

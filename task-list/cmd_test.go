@@ -100,7 +100,8 @@ var getRandomTaskFromStorage = func() (mockPersistedTask, error) {
 		return mockPersistedTask{}, fmt.Errorf("There are no tasks in the storage")
 	}
 
-	randomNumberBasedOnTaskLength := rand.New(rand.NewSource(time.Now().UnixNano())).
+	randomNumberBasedOnTaskLength := rand.New(
+		rand.NewSource(time.Now().UnixNano())).
 		Intn(len(tasks))
 
 	return tasks[randomNumberBasedOnTaskLength], nil
@@ -482,15 +483,11 @@ var _ = Describe("Cmd", func() {
 					taskFromOutputFieldValueBasedOnFlagName := reflect.ValueOf(taskFromOutput).
 						FieldByName(capitalisedFlagName)
 
-					taskFieldUpdatedAtFieldValue := reflect.ValueOf(task).
-						FieldByName("UpdatedAt")
-
-					taskFromOutputFieldUpdatedAtFieldValue := reflect.ValueOf(taskFromOutput).
-						FieldByName("UpdatedAt")
+					fmt.Print(task.UpdatedAt, taskFromOutput.UpdatedAt)
 
 					assert.Conditionf(func() bool {
 						return taskFieldValueBasedOnFlagName != taskFromOutputFieldValueBasedOnFlagName &&
-							taskFieldUpdatedAtFieldValue != taskFromOutputFieldUpdatedAtFieldValue
+							task.UpdatedAt != taskFromOutput.UpdatedAt
 					},
 
 						strings.Join(
@@ -505,8 +502,8 @@ var _ = Describe("Cmd", func() {
 						taskFieldValueBasedOnFlagName,
 						capitalisedFlagName,
 						taskFromOutputFieldValueBasedOnFlagName,
-						taskFieldUpdatedAtFieldValue,
-						taskFromOutputFieldUpdatedAtFieldValue,
+						task.UpdatedAt,
+						taskFromOutput.UpdatedAt,
 					)
 
 				})

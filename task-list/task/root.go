@@ -86,7 +86,7 @@ func NewTask(title, description string) Task {
 		Description: description,
 		id:          generateRandomString(12),
 		Priority:    LOW,
-		createdAt:   time.Now().Format(time.UnixDate),
+		createdAt:   time.Now().Format(time.RFC3339),
 		UpdatedAt:   time.Now(),
 	}
 }
@@ -101,8 +101,8 @@ func (self Task) Id() string {
 	return self.id
 }
 
-func (self Task) UpdatedAtAsUnixDateFormat() string {
-	return self.UpdatedAt.Format(time.UnixDate)
+func (self Task) UpdatedAtDateString() string {
+	return self.UpdatedAt.Format(time.DateOnly)
 }
 
 func (self Task) ToJSON() (string, error) {
@@ -114,7 +114,7 @@ func (self Task) ToJSON() (string, error) {
 		Priority:    self.Priority,
 		Complete:    self.Complete,
 		CreatedAt:   self.CreatedAt(),
-		UpdatedAt:   self.UpdatedAtAsUnixDateFormat(),
+		UpdatedAt:   self.UpdatedAtDateString(),
 	})
 
 	return string(byte), error
@@ -145,7 +145,7 @@ func SaveTasks(tasks []Task) error {
 				Priority:    item.Priority,
 				Complete:    item.Complete,
 				CreatedAt:   item.createdAt,
-				UpdatedAt:   item.UpdatedAtAsUnixDateFormat(),
+				UpdatedAt:   item.UpdatedAtDateString(),
 			}
 		},
 	),
@@ -183,7 +183,7 @@ func ReadTasks() ([]Task, error) {
 
 	tasks = lo.Map(persistedTasks, func(item persistedTask, index int) Task {
 
-		updatedAtTime, _ := time.Parse(time.UnixDate, item.UpdatedAt)
+		updatedAtTime, _ := time.Parse(time.DateOnly, item.UpdatedAt)
 
 		return Task{
 			Title:       item.Title,
@@ -214,7 +214,7 @@ func MarshallTasks(tasks []Task) (string, error) {
 				Priority:    item.Priority,
 				Complete:    item.Complete,
 				CreatedAt:   item.createdAt,
-				UpdatedAt:   item.UpdatedAtAsUnixDateFormat(),
+				UpdatedAt:   item.UpdatedAtDateString(),
 			}
 		},
 	)
