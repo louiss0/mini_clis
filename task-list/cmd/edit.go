@@ -83,13 +83,13 @@ var CreateEditCmd = func() *cobra.Command {
 				)
 			}
 
-			if title != "" {
+			if title != "" && foundTask.Title != title {
 
 				foundTask.Title = title
 				foundTask.UpdatedAt = time.Now()
 			}
 
-			if description != "" {
+			if description != "" && foundTask.Description != description {
 				foundTask.Description = description
 				foundTask.UpdatedAt = time.Now()
 
@@ -102,8 +102,11 @@ var CreateEditCmd = func() *cobra.Command {
 					return error
 				}
 
-				foundTask.Priority = parsedPriority
-				foundTask.UpdatedAt = time.Now()
+				if parsedPriority != foundTask.Priority {
+					foundTask.Priority = parsedPriority
+					foundTask.UpdatedAt = time.Now()
+
+				}
 
 			}
 
@@ -115,8 +118,12 @@ var CreateEditCmd = func() *cobra.Command {
 					return error
 				}
 
-				foundTask.Complete = parsedBool
-				foundTask.UpdatedAt = time.Now()
+				if foundTask.Complete != parsedBool {
+					foundTask.Complete = parsedBool
+					foundTask.UpdatedAt = time.Now()
+
+				}
+
 			}
 
 			task.SaveTasks(lo.Map(tasks, func(item task.Task, index int) task.Task {
