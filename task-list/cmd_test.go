@@ -114,6 +114,7 @@ var _ = Describe("Cmd", func() {
 			rootCmd.AddCommand(
 				CreateListCommand(),
 				CreateEditCmd(),
+				CreateAddCmd(),
 			)
 
 		}

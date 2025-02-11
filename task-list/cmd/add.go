@@ -5,67 +5,56 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/mini-clis/task-list/task"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )
 
 // addCmd represents the add command
-var addCmd = &cobra.Command{
-	Use:   "add",
-	Args:  cobra.ExactArgs(1),
-	Short: "Adds a task to the task list",
-	Long: `Adds a task name to the task list.
- A task can also have a description by using the --description flag.
- The time the task was created is automatcally stored.
- `,
-	Run: func(cmd *cobra.Command, args []string) {
+func CreateAddCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "add",
+		Short: "Add a task to the list of tasks",
+		Long: `This command allows you to add a task to the list.
+	When you do you must supply a title for your task. you decide to store a task you can set other things using flags.
+	Each flag will be dedicated to helping create a task.
+	`,
+		Args: cobra.RangeArgs(1, 2),
+		RunE: func(cmd *cobra.Command, args []string) error {
 
-		description := cmd.Flag("description").Value.String()
-
-		priority := cmd.Flag("priority").Value.String()
-
-		title := args[0]
-
-		tasks, error := task.ReadTasks()
-
-		if error != nil {
-
-			log.Fatal(error)
-
-		}
-
-		newTask := task.NewTask(title, description)
-
-		if priority != "" {
-
-			parsedPriority, error := task.ParsePriority(priority)
+			_, error := task.ReadTasks()
 
 			if error != nil {
-
-				log.Fatal(error)
-
+				return error
 			}
-			newTask.Priority = parsedPriority
-		}
 
-		tasks = append(tasks, newTask)
+			title, description := args[0], lo.TernaryF(len(args) == 2,
+				func() string { return args[1] },
+				func() string { return "" },
+			)
 
-		err := task.SaveTasks(tasks)
+			newTask := task.NewTask(title, description)
 
-		if err != nil {
+			// task.MarshallTasks(append(tasks, newTask))
 
-			log.Fatal(err)
-		}
+			fmt.Println("This is the task you added")
 
-		fmt.Print("Added a task to the task list")
+			taskAsJson, unmarshallError := newTask.ToJSON()
 
-	},
+			if unmarshallError != nil {
+				return unmarshallError
+			}
+
+			fmt.Fprint(cmd.OutOrStdout(), taskAsJson)
+
+			return nil
+		},
+	}
 }
 
 func init() {
-	rootCmd.AddCommand(addCmd)
+	rootCmd.AddCommand(CreateAddCmd())
 
 	// Here you will define your flags and configuration settings.
 
@@ -75,19 +64,5 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	addCmd.Flags().StringP(
-		"description",
-		"d",
-		"",
-		`The task description.
-		What is the task about?
-		What are the requirements?`,
-	)
-
-	addCmd.Flags().StringP(
-		"priority",
-		"p",
-		"",
-		"Set a task to either a high, low or medium priority default is low",
-	)
+	// addCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
