@@ -102,7 +102,7 @@ var CreateEditCmd = func() *cobra.Command {
 					return error
 				}
 
-				if parsedPriority.Value() != foundTask.Priority.Value() {
+				if parsedPriority != foundTask.Priority {
 					foundTask.Priority = parsedPriority
 					foundTask.UpdatedAt = time.Now()
 
