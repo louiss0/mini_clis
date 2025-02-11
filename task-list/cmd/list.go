@@ -122,12 +122,12 @@ func CreateListCommand() *cobra.Command {
 
 			if sortDate == LATEST {
 				slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
-					aTime, aTimeErr := time.Parse(time.UnixDate, a.CreatedAt())
+					aTime, aTimeErr := time.Parse(time.DateOnly, a.CreatedAt())
 					if aTimeErr != nil {
 						return 0
 					}
 
-					bTime, bTimeErr := time.Parse(time.UnixDate, b.CreatedAt())
+					bTime, bTimeErr := time.Parse(time.DateOnly, b.CreatedAt())
 					if bTimeErr != nil {
 						return 0
 					}
@@ -144,12 +144,12 @@ func CreateListCommand() *cobra.Command {
 
 			if sortDate == EARLIEST {
 				slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
-					aTime, aTimeErr := time.Parse(time.UnixDate, a.CreatedAt())
+					aTime, aTimeErr := time.Parse(time.DateOnly, a.CreatedAt())
 					if aTimeErr != nil {
 						return 0
 					}
 
-					bTime, bTimeErr := time.Parse(time.UnixDate, b.CreatedAt())
+					bTime, bTimeErr := time.Parse(time.DateOnly, b.CreatedAt())
 					if bTimeErr != nil {
 						return 0
 					}

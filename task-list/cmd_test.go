@@ -280,9 +280,9 @@ var _ = Describe("Cmd", func() {
 							return true
 						}
 
-						firstCreatedTime, firstCreatedError := time.Parse(time.UnixDate, first.CreatedAt)
+						firstCreatedTime, firstCreatedError := time.Parse(time.DateOnly, first.CreatedAt)
 
-						secondCreatedTime, secondCreatedError := time.Parse(time.UnixDate, second.CreatedAt)
+						secondCreatedTime, secondCreatedError := time.Parse(time.DateOnly, second.CreatedAt)
 
 						if firstCreatedError != nil || secondCreatedError != nil {
 
@@ -315,9 +315,9 @@ var _ = Describe("Cmd", func() {
 							return true
 						}
 
-						firstCreatedTime, firstCreatedError := time.Parse(time.UnixDate, first.CreatedAt)
+						firstCreatedTime, firstCreatedError := time.Parse(time.DateOnly, first.CreatedAt)
 
-						secondCreatedTime, secondCreatedError := time.Parse(time.UnixDate, second.CreatedAt)
+						secondCreatedTime, secondCreatedError := time.Parse(time.DateOnly, second.CreatedAt)
 
 						if firstCreatedError != nil || secondCreatedError != nil {
 
