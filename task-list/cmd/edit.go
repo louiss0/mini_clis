@@ -119,6 +119,12 @@ var CreateEditCmd = func() *cobra.Command {
 				foundTask.UpdatedAt = time.Now()
 			}
 
+			task.SaveTasks(lo.Map(tasks, func(item task.Task, index int) task.Task {
+
+				return lo.If(item.Id() == foundTask.Id(), foundTask).Else(item)
+
+			}))
+
 			taskAsJSON, error := foundTask.ToJSON()
 
 			if error != nil {
