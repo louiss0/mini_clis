@@ -86,7 +86,7 @@ func NewTask(title, description string) Task {
 		Description: description,
 		id:          generateRandomString(12),
 		Priority:    LOW,
-		createdAt:   time.Now().Format(time.RFC3339),
+		createdAt:   time.Now().Format(time.DateTime),
 		UpdatedAt:   time.Now(),
 	}
 }
@@ -102,7 +102,7 @@ func (self Task) Id() string {
 }
 
 func (self Task) UpdatedAtDateString() string {
-	return self.UpdatedAt.Format(time.DateOnly)
+	return self.UpdatedAt.Format(time.DateTime)
 }
 
 func (self Task) ToJSON() (string, error) {
@@ -183,7 +183,7 @@ func ReadTasks() ([]Task, error) {
 
 	tasks = lo.Map(persistedTasks, func(item persistedTask, index int) Task {
 
-		updatedAtTime, _ := time.Parse(time.DateOnly, item.UpdatedAt)
+		updatedAtTime, _ := time.Parse(time.DateTime, item.UpdatedAt)
 
 		return Task{
 			Title:       item.Title,
