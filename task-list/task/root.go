@@ -111,7 +111,7 @@ func (self Task) ToJSON() (string, error) {
 		Id:          self.id,
 		Title:       self.Title,
 		Description: self.Description,
-		Priority:    self.Priority,
+		Priority:    self.Priority.Value(),
 		Complete:    self.Complete,
 		CreatedAt:   self.CreatedAt(),
 		UpdatedAt:   self.UpdatedAtDateString(),
@@ -121,13 +121,13 @@ func (self Task) ToJSON() (string, error) {
 }
 
 type persistedTask struct {
-	Id          string   `json:"id"`
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	Priority    priority `json:"priority"`
-	Complete    bool     `json:"complete"`
-	CreatedAt   string   `json:"createdAt"`
-	UpdatedAt   string   `json:"updatedAt"`
+	Id          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Priority    string `json:"priority"`
+	Complete    bool   `json:"complete"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
 }
 
 const TASK_LIST_STORAGE_PATH = "/home/shelton-louis/Desktop/cli-projects/mini-clis/task-list/task-list.json"
@@ -142,7 +142,7 @@ func SaveTasks(tasks []Task) error {
 				Id:          item.id,
 				Title:       item.Title,
 				Description: item.Description,
-				Priority:    item.Priority,
+				Priority:    item.Priority.Value(),
 				Complete:    item.Complete,
 				CreatedAt:   item.createdAt,
 				UpdatedAt:   item.UpdatedAtDateString(),
@@ -185,10 +185,12 @@ func ReadTasks() ([]Task, error) {
 
 		updatedAtTime, _ := time.Parse(time.DateTime, item.UpdatedAt)
 
+		parsedPriority, _ := ParsePriority(item.Priority)
+
 		return Task{
 			Title:       item.Title,
 			Description: item.Description,
-			Priority:    item.Priority,
+			Priority:    parsedPriority,
 			Complete:    item.Complete,
 			UpdatedAt:   updatedAtTime,
 			createdAt:   item.CreatedAt,
@@ -211,7 +213,7 @@ func MarshallTasks(tasks []Task) (string, error) {
 				Id:          item.id,
 				Title:       item.Title,
 				Description: item.Description,
-				Priority:    item.Priority,
+				Priority:    item.Priority.Value(),
 				Complete:    item.Complete,
 				CreatedAt:   item.createdAt,
 				UpdatedAt:   item.UpdatedAtDateString(),
