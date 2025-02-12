@@ -26,8 +26,8 @@ type mockPersistedTask struct {
 	Description string `json:"description"`
 	Priority    string `json:"priority"`
 	Complete    bool   `json:"complete"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+	CreatedAt   int64  `json:"createdAt"`
+	UpdatedAt   int64  `json:"updatedAt"`
 }
 
 var executeCommand = func(cmd *cobra.Command, args ...string) (string, error) {
