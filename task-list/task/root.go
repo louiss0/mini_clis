@@ -60,8 +60,8 @@ func ParsePriority(input string) (priority, error) {
 type Task struct {
 	Title,
 	Description,
-	id,
-	createdAt string
+	id string
+	createdAt int64
 	Priority  priority
 	Complete  bool
 	UpdatedAt time.Time
@@ -86,12 +86,12 @@ func NewTask(title, description string) Task {
 		Description: description,
 		id:          generateRandomString(12),
 		Priority:    LOW,
-		createdAt:   time.Now().Format(time.DateTime),
+		createdAt:   time.Now().UnixMicro(),
 		UpdatedAt:   time.Now(),
 	}
 }
 
-func (self Task) CreatedAt() string {
+func (self Task) CreatedAt() int64 {
 
 	return self.createdAt
 }
@@ -101,8 +101,8 @@ func (self Task) Id() string {
 	return self.id
 }
 
-func (self Task) UpdatedAtDateString() string {
-	return self.UpdatedAt.Format(time.DateTime)
+func (self Task) UpdatedAtTimeStamp() int64 {
+	return self.UpdatedAt.UnixMicro()
 }
 
 func (self Task) ToJSON() (string, error) {
@@ -114,7 +114,7 @@ func (self Task) ToJSON() (string, error) {
 		Priority:    self.Priority.Value(),
 		Complete:    self.Complete,
 		CreatedAt:   self.CreatedAt(),
-		UpdatedAt:   self.UpdatedAtDateString(),
+		UpdatedAt:   self.UpdatedAtTimeStamp(),
 	})
 
 	return string(byte), error
@@ -126,8 +126,8 @@ type persistedTask struct {
 	Description string `json:"description"`
 	Priority    string `json:"priority"`
 	Complete    bool   `json:"complete"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+	CreatedAt   int64  `json:"createdAt"`
+	UpdatedAt   int64  `json:"updatedAt"`
 }
 
 const TASK_LIST_STORAGE_PATH = "/home/shelton-louis/Desktop/cli-projects/mini-clis/task-list/task-list.json"
@@ -145,7 +145,7 @@ func SaveTasks(tasks []Task) error {
 				Priority:    item.Priority.Value(),
 				Complete:    item.Complete,
 				CreatedAt:   item.createdAt,
-				UpdatedAt:   item.UpdatedAtDateString(),
+				UpdatedAt:   item.UpdatedAtTimeStamp(),
 			}
 		},
 	),
@@ -183,8 +183,6 @@ func ReadTasks() ([]Task, error) {
 
 	tasks = lo.Map(persistedTasks, func(item persistedTask, index int) Task {
 
-		updatedAtTime, _ := time.Parse(time.DateTime, item.UpdatedAt)
-
 		parsedPriority, _ := ParsePriority(item.Priority)
 
 		return Task{
@@ -192,7 +190,7 @@ func ReadTasks() ([]Task, error) {
 			Description: item.Description,
 			Priority:    parsedPriority,
 			Complete:    item.Complete,
-			UpdatedAt:   updatedAtTime,
+			UpdatedAt:   time.UnixMicro(item.UpdatedAt),
 			createdAt:   item.CreatedAt,
 			id:          item.Id,
 		}
@@ -216,7 +214,7 @@ func MarshallTasks(tasks []Task) (string, error) {
 				Priority:    item.Priority.Value(),
 				Complete:    item.Complete,
 				CreatedAt:   item.createdAt,
-				UpdatedAt:   item.UpdatedAtDateString(),
+				UpdatedAt:   item.UpdatedAtTimeStamp(),
 			}
 		},
 	)

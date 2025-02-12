@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/mini-clis/task-list/custom_errors"
 	"github.com/mini-clis/task-list/task"
@@ -122,45 +121,25 @@ func CreateListCommand() *cobra.Command {
 
 			if sortDate == LATEST {
 				slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
-					aTime, aTimeErr := time.Parse(time.DateTime, a.CreatedAt())
-					if aTimeErr != nil {
-						return 0
+					if a.CreatedAt() > b.CreatedAt() {
+						return -1 // a should come before b (latest first)
 					}
-
-					bTime, bTimeErr := time.Parse(time.DateTime, b.CreatedAt())
-					if bTimeErr != nil {
-						return 0
+					if a.CreatedAt() < b.CreatedAt() {
+						return 1 // b should come before a
 					}
-
-					if aTime.After(bTime) {
-						return -1
-					}
-					if bTime.After(aTime) {
-						return 1
-					}
-					return 0
+					return 0 // Equal
 				})
 			}
 
 			if sortDate == EARLIEST {
 				slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
-					aTime, aTimeErr := time.Parse(time.DateTime, a.CreatedAt())
-					if aTimeErr != nil {
-						return 0
+					if a.CreatedAt() < b.CreatedAt() {
+						return -1 // a should come first (earliest first)
 					}
-
-					bTime, bTimeErr := time.Parse(time.DateTime, b.CreatedAt())
-					if bTimeErr != nil {
-						return 0
+					if a.CreatedAt() > b.CreatedAt() {
+						return 1 // b should come first
 					}
-
-					if aTime.After(bTime) {
-						return 1
-					}
-					if bTime.After(aTime) {
-						return -1
-					}
-					return 0
+					return 0 // Equal
 				})
 			}
 
