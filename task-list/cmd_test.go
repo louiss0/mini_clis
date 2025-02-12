@@ -497,14 +497,11 @@ var _ = Describe("Cmd", func() {
 					taskFromOutputFieldValueBasedOnFlagName := reflect.ValueOf(taskFromOutput).
 						FieldByName(capitalisedFlagName).Interface()
 
-					assert.Conditionf(func() bool {
-
-						return lo.Ternary(
-							taskFieldValueBasedOnFlagName != taskFromOutputFieldValueBasedOnFlagName,
-							mockTask.UpdatedAt != taskFromOutput.UpdatedAt,
-							mockTask.UpdatedAt == taskFromOutput.UpdatedAt,
-						)
-					},
+					assert.Truef(lo.Ternary(
+						taskFieldValueBasedOnFlagName != taskFromOutputFieldValueBasedOnFlagName,
+						mockTask.UpdatedAt != taskFromOutput.UpdatedAt,
+						mockTask.UpdatedAt == taskFromOutput.UpdatedAt,
+					),
 						strings.Join(
 							[]string{
 								"The value of the updatedAt field from a task in storage is only supposed to change when the the value a field changes",
@@ -562,12 +559,35 @@ var _ = Describe("Cmd", func() {
 
 			It("works", func() {
 
+				previousTasksFromStorage, error := getMockPersistedTasks()
+				assert.NoError(error)
+				assert.NotEmpty(previousTasksFromStorage)
+
 				task, error := getMockPersistedTaskBasedOnOutput(
 					executeCommand(rootCmd, "add", "Clean Room"),
 				)
 
 				assert.NoError(error)
 				assert.NotEmpty(task)
+
+				newMockPersistedTasks, error := getMockPersistedTasks()
+
+				assert.NoError(error)
+				assert.NotEmpty(newMockPersistedTasks)
+
+				newMockPersistedTasksLength := len(newMockPersistedTasks)
+				previousTasksFromStorageLength := len(previousTasksFromStorage)
+
+				assert.Truef(
+					newMockPersistedTasksLength > previousTasksFromStorageLength,
+					strings.Join([]string{
+						"The length of the previous tasks aren't longer than the length of the new ones",
+						"Amount of previous tasks: %d",
+						"Amount of new tasks %d",
+					}, "\n"),
+					previousTasksFromStorageLength,
+					newMockPersistedTasksLength,
+				)
 
 			})
 
