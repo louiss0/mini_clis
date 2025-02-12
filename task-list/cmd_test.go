@@ -336,16 +336,7 @@ var _ = Describe("Cmd", func() {
 							return true
 						}
 
-						firstCreatedTime, firstCreatedError := time.Parse(time.DateTime, first.CreatedAt)
-
-						secondCreatedTime, secondCreatedError := time.Parse(time.DateTime, second.CreatedAt)
-
-						if firstCreatedError != nil || secondCreatedError != nil {
-
-							return false
-						}
-
-						return firstCreatedTime.After(secondCreatedTime)
+						return first.CreatedAt > second.CreatedAt
 
 					})
 
@@ -374,16 +365,7 @@ var _ = Describe("Cmd", func() {
 							return true
 						}
 
-						firstCreatedTime, firstCreatedError := time.Parse(time.DateTime, first.CreatedAt)
-
-						secondCreatedTime, secondCreatedError := time.Parse(time.DateTime, second.CreatedAt)
-
-						if firstCreatedError != nil || secondCreatedError != nil {
-
-							return false
-						}
-
-						return firstCreatedTime.Before(secondCreatedTime)
+						return first.CreatedAt < second.CreatedAt
 
 					})
 
