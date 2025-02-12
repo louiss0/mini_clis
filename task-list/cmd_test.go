@@ -210,6 +210,11 @@ var _ = Describe("Cmd", func() {
 					allTasksAreSortedByTheHigestOrder := lo.EveryBy(
 						lo.Chunk(tasks, 2),
 						func(item []mockPersistedTask) bool {
+
+							if len(item) < 2 {
+								return true
+							}
+
 							first, second := item[0], item[1]
 
 							if reflect.TypeOf(second).Kind() != reflect.Struct {
@@ -243,6 +248,11 @@ var _ = Describe("Cmd", func() {
 					allTasksAreSortedByTheLowestOrder := lo.EveryBy(
 						lo.Chunk(tasks, 2),
 						func(item []mockPersistedTask) bool {
+
+							if len(item) < 2 {
+								return true
+							}
+
 							first, second := item[0], item[1]
 
 							if reflect.TypeOf(second).Kind() != reflect.Struct {
@@ -269,6 +279,11 @@ var _ = Describe("Cmd", func() {
 					assert.Greater(len(tasks), 1)
 
 					allTasksAreSortedByTheHigestOrder := lo.EveryBy(lo.Chunk(tasks, 2), func(item []mockPersistedTask) bool {
+
+						if len(item) < 2 {
+							return true
+						}
+
 						first, second := item[0], item[1]
 
 						if reflect.TypeOf(second).Kind() != reflect.Struct {
@@ -302,6 +317,11 @@ var _ = Describe("Cmd", func() {
 					assert.NoError(error)
 
 					allTasksAreSortedByTheHigestOrder := lo.EveryBy(lo.Chunk(tasks, 2), func(item []mockPersistedTask) bool {
+
+						if len(item) < 2 {
+							return true
+						}
+
 						first, second := item[0], item[1]
 
 						if reflect.TypeOf(second).Kind() != reflect.Struct {
