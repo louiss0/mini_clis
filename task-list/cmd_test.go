@@ -577,6 +577,24 @@ var _ = Describe("Cmd", func() {
 
 		Context("Adding tasks", Ordered, func() {
 
+			generateFakeTitle := func() string {
+
+				return gofakeit.Sentence(gofakeit.IntRange(
+					1,
+					5,
+				))
+			}
+
+			generateFakeDescription := func() string {
+
+				return gofakeit.Paragraph(
+					gofakeit.IntRange(1, 5),
+					gofakeit.IntRange(5, 10),
+					gofakeit.IntRange(7, 12),
+					"\n",
+				)
+			}
+
 			AfterEach(func() {
 
 				time.Sleep(time.Second)
@@ -590,7 +608,11 @@ var _ = Describe("Cmd", func() {
 				assert.NotEmpty(previousTasksFromStorage)
 
 				task, error := getMockPersistedTaskBasedOnOutput(
-					executeCommand(rootCmd, "add", "Clean Room"),
+					executeCommand(
+						rootCmd,
+						"add",
+						generateFakeTitle(),
+					),
 				)
 
 				assert.NoError(error)
@@ -620,7 +642,12 @@ var _ = Describe("Cmd", func() {
 			It("adds a description to the task when a second argument is passed", func() {
 
 				task, error := getMockPersistedTaskBasedOnOutput(
-					executeCommand(rootCmd, "add", "Clean Room", "Blah Blah Blah!"),
+					executeCommand(
+						rootCmd,
+						"add",
+						generateFakeTitle(),
+						generateFakeDescription(),
+					),
 				)
 
 				assert.NoError(error)
