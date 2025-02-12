@@ -103,56 +103,61 @@ var getRandomPersistedTask = func(tasks []mockPersistedTask) (mockPersistedTask,
 
 }
 
+var seedTasks = func(assert *assert.Assertions) {
+	file, err := os.OpenFile(
+		task.TASK_LIST_STORAGE_PATH,
+		os.O_TRUNC|os.O_WRONLY,
+		os.ModePerm,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fakeTasks := lo.Map(
+		lo.Range(gofakeit.IntRange(3, 15)),
+		func(item int, index int) mockPersistedTask {
+
+			time.Sleep(time.Millisecond * 2)
+
+			return mockPersistedTask{
+				Id:    gofakeit.UUID(),
+				Title: gofakeit.Sentence(gofakeit.IntRange(2, 12)),
+				Description: gofakeit.Paragraph(
+					gofakeit.IntRange(1, 5),
+					gofakeit.IntRange(5, 10),
+					gofakeit.IntRange(2, 15),
+					"\n",
+				),
+				CreatedAt: time.Now().UnixMilli(),
+				UpdatedAt: time.Now().UnixMilli(),
+				Complete:  gofakeit.Bool(),
+				Priority: gofakeit.RandomString([]string{
+					task.HIGH.Value(),
+					task.MEDIUM.Value(),
+					task.LOW.Value(),
+				}),
+			}
+
+		})
+
+	byte, error := json.Marshal(fakeTasks)
+
+	assert.NoError(error)
+
+	file.Truncate(0)
+
+	file.Write(byte)
+
+	defer file.Close()
+}
+
 var _ = Describe("Cmd", func() {
 
 	assert := assert.New(GinkgoT())
 
 	rootCmd := RootCmd()
 
-	BeforeAll(func() {
-		file, err := os.OpenFile(
-			task.TASK_LIST_STORAGE_PATH,
-			os.O_TRUNC|os.O_WRONLY,
-			os.ModePerm,
-		)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fakeTasks := lo.Map(
-			lo.Range(gofakeit.IntRange(3, 15)),
-			func(item int, index int) mockPersistedTask {
-				return mockPersistedTask{
-					Id:    gofakeit.UUID(),
-					Title: gofakeit.Sentence(gofakeit.IntRange(2, 12)),
-					Description: gofakeit.Paragraph(
-						gofakeit.IntRange(1, 5),
-						gofakeit.IntRange(5, 10),
-						gofakeit.IntRange(2, 15),
-						"\n",
-					),
-					CreatedAt: time.Now().UnixMilli(),
-					UpdatedAt: time.Now().UnixMilli(),
-					Complete:  gofakeit.Bool(),
-					Priority: gofakeit.RandomString([]string{
-						task.HIGH.Value(),
-						task.MEDIUM.Value(),
-						task.LOW.Value(),
-					}),
-				}
-
-			})
-
-		byte, error := json.Marshal(fakeTasks)
-
-		assert.NoError(error)
-
-		file.Truncate(0)
-
-		file.Write(byte)
-
-		defer file.Close()
-	})
+	seedTasks(assert)
 
 	BeforeEach(func() {
 
