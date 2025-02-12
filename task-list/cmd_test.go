@@ -88,7 +88,7 @@ var getMockPersistedTaskBasedOnOutput = func(output string, error error) (mockPe
 	return task, nil
 }
 
-var getRandomTaskPersistedTasks = func(tasks []mockPersistedTask) (mockPersistedTask, error) {
+var getRandomTaskPersistedTask = func(tasks []mockPersistedTask) (mockPersistedTask, error) {
 
 	if len(tasks) == 0 {
 		return mockPersistedTask{}, fmt.Errorf("There are no tasks in the storage")
