@@ -23,7 +23,7 @@ func CreateAddCmd() *cobra.Command {
 		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			_, error := task.ReadTasks()
+			tasks, error := task.ReadTasks()
 
 			if error != nil {
 				return error
@@ -36,7 +36,7 @@ func CreateAddCmd() *cobra.Command {
 
 			newTask := task.NewTask(title, description)
 
-			// task.MarshallTasks(append(tasks, newTask))
+			task.SaveTasks(append([]task.Task{newTask}, tasks...))
 
 			fmt.Println("This is the task you added")
 
