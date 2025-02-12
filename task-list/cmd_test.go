@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"reflect"
@@ -109,7 +110,6 @@ var _ = Describe("Cmd", func() {
 	rootCmd := RootCmd()
 
 	BeforeAll(func() {
-		// Method 2: Open file with O_TRUNC flag
 		file, err := os.OpenFile(
 			task.TASK_LIST_STORAGE_PATH,
 			os.O_TRUNC|os.O_WRONLY,
@@ -131,10 +131,14 @@ var _ = Describe("Cmd", func() {
 						gofakeit.IntRange(2, 15),
 						"\n",
 					),
-					// CreatedAt: string,
-					// UpdatedAt: string,
-					Complete: gofakeit.Bool(),
-					Priority: gofakeit.RandomString([]string{}),
+					CreatedAt: time.Now().UnixMilli(),
+					UpdatedAt: time.Now().UnixMilli(),
+					Complete:  gofakeit.Bool(),
+					Priority: gofakeit.RandomString([]string{
+						task.HIGH.Value(),
+						task.MEDIUM.Value(),
+						task.LOW.Value(),
+					}),
 				}
 
 			})
