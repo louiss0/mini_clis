@@ -591,6 +591,19 @@ var _ = Describe("Cmd", func() {
 
 			})
 
+			It("adds a description to the task when a second argument is passed", func() {
+
+				task, error := getMockPersistedTaskBasedOnOutput(
+					executeCommand(rootCmd, "add", "Clean Room", "Blah Blah Blah!"),
+				)
+
+				assert.NoError(error)
+				assert.NotEmpty(task)
+
+				assert.NotEmpty(task.Description)
+
+			})
+
 		})
 
 	})
