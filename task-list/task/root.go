@@ -3,11 +3,11 @@ package task
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/mini-clis/task-list/custom_errors"
 	"github.com/samber/lo"
 )
@@ -69,22 +69,10 @@ type Task struct {
 
 func NewTask(title, description string) Task {
 
-	// generateRandomString creates a random string of given length
-	generateRandomString := func(length int) string {
-		const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-		rand.New(rand.NewSource(int64(length))) // Seed the random number generator
-		b := make([]byte, length)
-
-		for i := range b {
-			b[i] = charset[rand.Intn(len(charset))]
-		}
-		return string(b)
-	}
-
 	return Task{
 		Title:       title,
 		Description: description,
-		id:          generateRandomString(12),
+		id:          uuid.NewString(),
 		Priority:    LOW,
 		createdAt:   time.Now().UnixMicro(),
 		UpdatedAt:   time.Now(),
