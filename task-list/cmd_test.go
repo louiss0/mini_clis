@@ -628,12 +628,6 @@ var _ = Describe("Cmd", func() {
 				)
 			}
 
-			AfterEach(func() {
-
-				time.Sleep(time.Second)
-
-			})
-
 			It("works", func() {
 
 				previousTasksFromStorage, error := getMockPersistedTasks()
