@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"reflect"
@@ -107,6 +108,48 @@ var _ = Describe("Cmd", func() {
 	assert := assert.New(GinkgoT())
 
 	rootCmd := RootCmd()
+
+	BeforeAll(func() {
+		// Method 2: Open file with O_TRUNC flag
+		file, err := os.OpenFile(
+			task.TASK_LIST_STORAGE_PATH,
+			os.O_TRUNC|os.O_WRONLY,
+			os.ModePerm,
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fakeTasks := lo.Map(
+			lo.Range(gofakeit.IntRange(3, 15)),
+			func(item int, index int) mockPersistedTask {
+				return mockPersistedTask{
+					Id:    gofakeit.UUID(),
+					Title: gofakeit.Sentence(gofakeit.IntRange(2, 12)),
+					Description: gofakeit.Paragraph(
+						gofakeit.IntRange(1, 5),
+						gofakeit.IntRange(5, 10),
+						gofakeit.IntRange(2, 15),
+						"\n",
+					),
+					// CreatedAt: string,
+					// UpdatedAt: string,
+					Complete: gofakeit.Bool(),
+					Priority: gofakeit.RandomString([]string{}),
+				}
+
+			})
+
+		byte, error := json.Marshal(fakeTasks)
+
+		assert.NoError(error)
+
+		file.Truncate(0)
+
+		file.Write(byte)
+
+		defer file.Close()
+	})
 
 	BeforeEach(func() {
 
