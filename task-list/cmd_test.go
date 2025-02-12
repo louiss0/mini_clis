@@ -575,7 +575,13 @@ var _ = Describe("Cmd", func() {
 
 		})
 
-		Context("Adding tasks", func() {
+		Context("Adding tasks", Ordered, func() {
+
+			AfterEach(func() {
+
+				time.Sleep(time.Second)
+
+			})
 
 			It("works", func() {
 
