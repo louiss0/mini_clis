@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/mini-clis/task-list/task"
 	"github.com/samber/lo"
@@ -57,7 +58,7 @@ func CreateAddCmd() *cobra.Command {
 
 			}
 
-			task.SaveTasks(append([]task.Task{newTask}, tasks...))
+			task.SaveTasks(slices.Insert(tasks, 0, newTask))
 
 			fmt.Println("This is the task you added")
 
@@ -74,6 +75,12 @@ func CreateAddCmd() *cobra.Command {
 	}
 
 	command.Flags().StringP(PRIORITY, "p", "", "Decide the priority of a task")
+
+	command.RegisterFlagCompletionFunc(PRIORITY, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+
+		return task.AllowedProrities, cobra.ShellCompDirectiveDefault
+
+	})
 
 	return command
 }
