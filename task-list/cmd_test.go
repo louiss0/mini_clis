@@ -898,9 +898,7 @@ var _ = Describe("Cmd", func() {
 			"deletes all tasks with a title when the title flag is set using the arg",
 			func() {
 
-				oldTasks, _ := getMockPersistedTasks()
-
-				randomPersistedTask, _ := getRandomPersistedTask(oldTasks)
+				randomPersistedTask, _ := getRandomPersistedTask(oldPersistedTasks)
 
 				output, error := executeCommand(
 					rootCmd,
@@ -915,7 +913,7 @@ var _ = Describe("Cmd", func() {
 				newTasks, _ := getMockPersistedTasks()
 
 				assertTasksAreADifferentLengths(
-					oldTasks,
+					oldPersistedTasks,
 					newTasks,
 					fmt.Sprintf(
 						"A task with this title wasn't deleted %s",
