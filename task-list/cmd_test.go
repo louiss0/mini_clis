@@ -703,6 +703,59 @@ var _ = Describe("Cmd", func() {
 
 			})
 
+			It("returns an error when wrong priority value is passed in", func() {
+
+				task, error := getMockPersistedTaskBasedOnOutput(
+					executeCommand(
+						rootCmd,
+						"add",
+						generateFakeTitle(),
+						"--priority",
+						"",
+					),
+				)
+
+				assert.NoError(error)
+				assert.NotEmpty(task)
+
+			})
+
+			It("sets the priority of the task when --priority is passed 'high'", func() {
+				taskFromOutput, error := getMockPersistedTaskBasedOnOutput(
+					executeCommand(
+						rootCmd,
+						"add",
+						generateFakeTitle(),
+						"--priority",
+						task.HIGH.Value(),
+					),
+				)
+
+				assert.NoError(error)
+				assert.NotEmpty(taskFromOutput)
+
+				assert.Equal(taskFromOutput.Priority, task.HIGH.Value())
+
+			})
+
+			It("sets the priority of the task when --priority is passed 'medium'", func() {
+				taskFromOutput, error := getMockPersistedTaskBasedOnOutput(
+					executeCommand(
+						rootCmd,
+						"add",
+						generateFakeTitle(),
+						"--priority",
+						task.MEDIUM.Value(),
+					),
+				)
+
+				assert.NoError(error)
+				assert.NotEmpty(taskFromOutput)
+
+				assert.Equal(taskFromOutput.Priority, task.MEDIUM.Value())
+
+			})
+
 		})
 
 	})
