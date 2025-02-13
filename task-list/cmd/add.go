@@ -37,6 +37,22 @@ func CreateAddCmd() *cobra.Command {
 
 			newTask := task.NewTask(title, description)
 
+			priorityFlag, priorityFlagError := cmd.Flags().GetString(PRIORITY)
+
+			if priorityFlagError != nil {
+				return priorityFlagError
+			}
+
+			if priorityFlag != "" {
+
+				_, error := task.ParsePriority(priorityFlag)
+
+				if error != nil {
+					return error
+				}
+
+			}
+
 			task.SaveTasks(append([]task.Task{newTask}, tasks...))
 
 			fmt.Println("This is the task you added")
