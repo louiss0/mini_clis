@@ -45,11 +45,13 @@ func CreateAddCmd() *cobra.Command {
 
 			if priorityFlag != "" {
 
-				_, error := task.ParsePriority(priorityFlag)
+				priority, error := task.ParsePriority(priorityFlag)
 
 				if error != nil {
 					return error
 				}
+
+				newTask.Priority = priority
 
 			}
 
