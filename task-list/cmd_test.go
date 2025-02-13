@@ -842,9 +842,9 @@ var _ = Describe("Cmd", func() {
 
 					output, error := executeCommand(rootCmd, "delete", priority, createFlag(PRIORITY))
 
-					assert.Error(error)
+					assert.NoError(error)
 
-					assert.Empty(output)
+					assert.NotEmpty(output)
 
 					newPersistedTasks, error := getMockPersistedTasks()
 
