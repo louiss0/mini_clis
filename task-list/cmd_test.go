@@ -114,7 +114,7 @@ var seedTasks = func(assert *assert.Assertions) {
 	}
 
 	fakeTasks := lo.Map(
-		lo.Range(gofakeit.IntRange(3, 15)),
+		lo.Range(gofakeit.IntRange(50, 500)),
 		func(item int, index int) mockPersistedTask {
 
 			time.Sleep(time.Millisecond * 2)
@@ -765,7 +765,7 @@ var _ = Describe("Cmd", func() {
 
 		var oldPersistedTasks []mockPersistedTask
 
-		BeforeAll(func() {
+		BeforeEach(func() {
 
 			tasks, error := getMockPersistedTasks()
 
@@ -777,21 +777,14 @@ var _ = Describe("Cmd", func() {
 
 		})
 
-		var mockTask mockPersistedTask
-
-		BeforeEach(func() {
+		It("works", func() {
 
 			storageTask, storageError := getRandomPersistedTask(oldPersistedTasks)
 
-			mockTask = storageTask
 			assert.NoError(storageError)
 			assert.NotEmpty(storageTask)
 
-		})
-
-		It("works", func() {
-
-			output, error := executeCommand(rootCmd, "delete", mockTask.Id)
+			output, error := executeCommand(rootCmd, "delete", storageTask.Id)
 
 			assert.NoError(error)
 
@@ -811,7 +804,7 @@ var _ = Describe("Cmd", func() {
 				},
 					"\n",
 				),
-				mockTask.Id,
+				storageTask.Id,
 				oldPersistedTasksLength,
 				newPersistedTaskslength,
 			)
@@ -828,7 +821,7 @@ var _ = Describe("Cmd", func() {
 					fmt.Sprintf("output's an error when the %s flag is set but an invalid value is passed", flagName),
 					func() {
 
-						output, error := executeCommand(rootCmd, "delete", mockTask.Id, createFlag(flagName))
+						output, error := executeCommand(rootCmd, "delete", "blah!", createFlag(flagName))
 
 						assert.Error(error)
 
