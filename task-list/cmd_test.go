@@ -114,7 +114,7 @@ var seedTasks = func(assert *assert.Assertions) {
 	}
 
 	fakeTasks := lo.Map(
-		lo.Range(gofakeit.IntRange(50, 500)),
+		lo.Range(gofakeit.IntRange(25, 50)),
 		func(item int, index int) mockPersistedTask {
 
 			time.Sleep(time.Millisecond * 2)
