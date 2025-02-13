@@ -820,14 +820,20 @@ var _ = Describe("Cmd", func() {
 
 		lo.ForEach([]string{
 			PRIORITY,
-			"completion",
-			TITLE,
-		}, func(item string, index int) {
-			PIt(
-				fmt.Sprintf("output's an error when the %s flag is set but an invalid value is passed", item),
+			COMPLETION,
+		}, func(flagName string, index int) {
+
+			It(
+				fmt.Sprintf("output's an error when the %s flag is set but an invalid value is passed", flagName),
 				func() {
 
-				})
+					output, error := executeCommand(rootCmd, "delete", mockTask.Id, createFlag(flagName))
+
+					assert.Error(error)
+
+					assert.Empty(output)
+
+			})
 
 		})
 
