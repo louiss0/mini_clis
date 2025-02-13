@@ -777,6 +777,25 @@ var _ = Describe("Cmd", func() {
 
 		})
 
+		assertTasksAreADifferentLengths := func(oldPersistedTasks, newPersistedTasks []mockPersistedTask, contextMessage string) {
+			oldPersistedTasksLength := len(oldPersistedTasks)
+			newPersistedTaskslength := len(newPersistedTasks)
+
+			assert.Truef(
+				oldPersistedTasksLength > newPersistedTaskslength,
+				strings.Join([]string{
+					contextMessage,
+					"oldPersistedTasksLength %d",
+					"newPersistedTaskslength %d",
+				},
+					"\n",
+				),
+
+				oldPersistedTasksLength,
+				newPersistedTaskslength,
+			)
+		}
+
 		It("works", func() {
 
 			storageTask, storageError := getRandomPersistedTask(oldPersistedTasks)
@@ -792,21 +811,15 @@ var _ = Describe("Cmd", func() {
 
 			newPersistedTasks, error := getMockPersistedTasks()
 
-			oldPersistedTasksLength := len(oldPersistedTasks)
-			newPersistedTaskslength := len(newPersistedTasks)
+			assert.NoError(error)
 
-			assert.Truef(
-				oldPersistedTasksLength > newPersistedTaskslength,
-				strings.Join([]string{
+			assertTasksAreADifferentLengths(
+				oldPersistedTasks,
+				newPersistedTasks,
+				fmt.Sprintf(
 					"The task with this id wasn't deleted %s",
-					"oldPersistedTasksLength %d",
-					"newPersistedTaskslength %d",
-				},
-					"\n",
+					storageTask.Id,
 				),
-				storageTask.Id,
-				oldPersistedTasksLength,
-				newPersistedTaskslength,
 			)
 
 		})
@@ -848,21 +861,15 @@ var _ = Describe("Cmd", func() {
 
 					newPersistedTasks, error := getMockPersistedTasks()
 
-					oldPersistedTasksLength := len(oldPersistedTasks)
-					newPersistedTaskslength := len(newPersistedTasks)
+					assert.NoError(error)
 
-					assert.Truef(
-						oldPersistedTasksLength > newPersistedTaskslength,
-						strings.Join([]string{
+					assertTasksAreADifferentLengths(
+						oldPersistedTasks,
+						newPersistedTasks,
+						fmt.Sprintf(
 							"No task with this priority wasn't deleted %s",
-							"oldPersistedTasksLength %d",
-							"newPersistedTaskslength %d",
-						},
-							"\n",
+							priority,
 						),
-						priority,
-						oldPersistedTasksLength,
-						newPersistedTaskslength,
 					)
 
 					newPersistedTasksDoNotHaveThisPriority := lo.EveryBy(
