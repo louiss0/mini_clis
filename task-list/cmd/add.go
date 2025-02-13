@@ -13,7 +13,8 @@ import (
 
 // addCmd represents the add command
 func CreateAddCmd() *cobra.Command {
-	return &cobra.Command{
+
+	command := &cobra.Command{
 		Use:   "add",
 		Short: "Add a task to the list of tasks",
 		Long: `This command allows you to add a task to the list.
@@ -51,6 +52,10 @@ func CreateAddCmd() *cobra.Command {
 			return nil
 		},
 	}
+
+	command.Flags().StringP(PRIORITY, "p", "", "Decide the priority of a task")
+
+	return command
 }
 
 func init() {
