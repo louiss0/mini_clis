@@ -788,13 +788,11 @@ var _ = Describe("Cmd", func() {
 
 			It("works", func() {
 
-				taskFromOutput, error := getMockPersistedTaskBasedOnOutput(
-					executeCommand(rootCmd, "delete", mockTask.Id),
-				)
+				output, error := executeCommand(rootCmd, "delete", mockTask.Id)
 
 				assert.NoError(error)
 
-				assert.NotEmpty(taskFromOutput)
+				assert.NotEmpty(output)
 
 				newPersistedTasks, error := getMockPersistedTasks()
 
@@ -810,6 +808,9 @@ var _ = Describe("Cmd", func() {
 					},
 						"\n",
 					),
+					mockTask.Id,
+					oldPersistedTasksLength,
+					newPersistedTaskslength,
 				)
 
 			})
