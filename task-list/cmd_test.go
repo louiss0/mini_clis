@@ -777,6 +777,10 @@ var _ = Describe("Cmd", func() {
 
 		})
 
+		AfterEach(func() {
+			seedTasks(assert)
+		})
+
 		assertTasksAreADifferentLengths := func(oldPersistedTasks, newPersistedTasks []mockPersistedTask, contextMessage string) {
 			oldPersistedTasksLength := len(oldPersistedTasks)
 			newPersistedTaskslength := len(newPersistedTasks)
