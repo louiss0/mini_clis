@@ -79,10 +79,10 @@ func CreateListCommand() *cobra.Command {
 				return tasksErr
 			}
 
-			sortPriorityIsEmptyAndItHasIncorrectValues :=
+			sortPriorityIsEmptyAndHasIncorrectValues :=
 				sortPriority != "" && !lo.Contains(allowedPrioritySortValues, sortPriority)
 
-			if sortPriorityIsEmptyAndItHasIncorrectValues {
+			if sortPriorityIsEmptyAndHasIncorrectValues {
 
 				return custom_errors.CreateInvalidFlagErrorWithMessage(
 					fmt.Sprintf(
@@ -105,18 +105,16 @@ func CreateListCommand() *cobra.Command {
 				})
 			}
 
-			sortDateIsNotEmptyAndItHasInCorrrectValues :=
+			sortDateIsNotEmptyAndItHasIncorrectValues :=
 				sortDate != "" && !lo.Contains(allowedDateSortValues, sortDate)
 
-			if sortDateIsNotEmptyAndItHasInCorrrectValues {
-
+			if sortDateIsNotEmptyAndItHasIncorrectValues {
 				return custom_errors.CreateInvalidFlagErrorWithMessage(
 					fmt.Sprintf(
-						"The only allowed value for sort-priority are %s",
+						"The only allowed value for sort-date are %s",
 						strings.Join(allowedDateSortValues, ","),
 					),
 				)
-
 			}
 
 			if sortDate == LATEST {
@@ -168,7 +166,7 @@ func CreateListCommand() *cobra.Command {
 
 				if len(tasks) == 0 {
 
-					fmt.Printf("There are no tasks with this proirity %s", priority)
+					fmt.Printf("There are no tasks with this priority %s", priority)
 
 					return nil
 				}
