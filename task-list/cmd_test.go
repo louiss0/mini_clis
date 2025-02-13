@@ -924,16 +924,52 @@ var _ = Describe("Cmd", func() {
 			},
 		)
 
-		PIt(
+		It(
 			"deletes all completed tasks when the completion flag is set and arg is complete",
 			func() {
+
+				output, error := executeCommand(
+					rootCmd,
+					"delete",
+					"complete",
+					createFlag(TITLE),
+				)
+
+				assert.NoError(error)
+				assert.NotEmpty(output)
+
+				newTasks, _ := getMockPersistedTasks()
+
+				assertTasksAreADifferentLengths(
+					oldPersistedTasks,
+					newTasks,
+					"There were no complete tasks.",
+				)
 
 			},
 		)
 
-		PIt(
+		It(
 			"deletes all incomplete tasks when the completion flag is set and arg is incomplete",
 			func() {
+
+				output, error := executeCommand(
+					rootCmd,
+					"delete",
+					"incomplete",
+					createFlag(TITLE),
+				)
+
+				assert.NoError(error)
+				assert.NotEmpty(output)
+
+				newTasks, _ := getMockPersistedTasks()
+
+				assertTasksAreADifferentLengths(
+					oldPersistedTasks,
+					newTasks,
+					"There were no incomplete tasks.",
+				)
 
 			},
 		)
