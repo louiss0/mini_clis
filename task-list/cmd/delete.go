@@ -42,7 +42,7 @@ func CreateDeleteCommand() *cobra.Command {
 
 			firstArgument := args[0]
 
-			_, titleError := cmd.Flags().GetBool(TITLE)
+			title, titleError := cmd.Flags().GetBool(TITLE)
 			completion, completionError := cmd.Flags().GetBool(COMPLETION)
 			priority, priorityError := cmd.Flags().GetBool(PRIORITY)
 
@@ -85,6 +85,11 @@ func CreateDeleteCommand() *cobra.Command {
 
 					return item.Priority != parsedPriority
 				})).
+				ElseIf(
+					title,
+					lo.Filter(tasks, func(item task.Task, index int) bool {
+						return item.Title != firstArgument
+					})).
 				Else(
 					lo.Filter(tasks, func(item task.Task, index int) bool {
 						return item.Id() != firstArgument
