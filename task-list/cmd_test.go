@@ -821,28 +821,74 @@ var _ = Describe("Cmd", func() {
 		lo.ForEach([]string{
 			PRIORITY,
 			COMPLETION,
-		}, func(flagName string, index int) {
+		},
+			func(flagName string, index int) {
+
+				It(
+					fmt.Sprintf("output's an error when the %s flag is set but an invalid value is passed", flagName),
+					func() {
+
+						output, error := executeCommand(rootCmd, "delete", mockTask.Id, createFlag(flagName))
+
+						assert.Error(error)
+
+						assert.Empty(output)
+
+					})
+
+			})
+
+		lo.ForEach(task.AllowedProrities, func(priority string, index int) {
 
 			It(
-				fmt.Sprintf("output's an error when the %s flag is set but an invalid value is passed", flagName),
+				fmt.Sprintf(
+					"deletes all tasks with a priority when the flag is set using the arg %s",
+					priority,
+				),
 				func() {
 
-					output, error := executeCommand(rootCmd, "delete", mockTask.Id, createFlag(flagName))
+					output, error := executeCommand(rootCmd, "delete", priority, createFlag(PRIORITY))
 
 					assert.Error(error)
 
 					assert.Empty(output)
 
-			})
+					newPersistedTasks, error := getMockPersistedTasks()
+
+					oldPersistedTasksLength := len(oldPersistedTasks)
+					newPersistedTaskslength := len(newPersistedTasks)
+
+					assert.Truef(
+						oldPersistedTasksLength > newPersistedTaskslength,
+						strings.Join([]string{
+							"No task with this priority wasn't deleted %s",
+							"oldPersistedTasksLength %d",
+							"newPersistedTaskslength %d",
+						},
+							"\n",
+						),
+						priority,
+						oldPersistedTasksLength,
+						newPersistedTaskslength,
+					)
+
+					newPersistedTasksDoNotHaveThisPriority := lo.EveryBy(
+						newPersistedTasks,
+						func(item mockPersistedTask) bool {
+
+							return item.Priority != priority
+						})
+
+					assert.Truef(
+						newPersistedTasksDoNotHaveThisPriority,
+						"No tasks are supposed to have this prority %s",
+						priority,
+					)
+
+				},
+			)
 
 		})
-
-		PIt(
-			"deletes all tasks with a priority when the flag is set using the arg",
-			func() {
-
-			},
-		)
 
 		PIt(
 			"deletes all tasks with a title when the title flag is set using the arg",
