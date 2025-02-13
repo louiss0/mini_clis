@@ -686,6 +686,23 @@ var _ = Describe("Cmd", func() {
 
 			})
 
+			It("allows the user to pass in a priority flag", func() {
+
+				task, error := getMockPersistedTaskBasedOnOutput(
+					executeCommand(
+						rootCmd,
+						"add",
+						generateFakeTitle(),
+						"--priority",
+						"",
+					),
+				)
+
+				assert.NoError(error)
+				assert.NotEmpty(task)
+
+			})
+
 		})
 
 	})
