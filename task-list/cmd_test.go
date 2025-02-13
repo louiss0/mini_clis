@@ -166,6 +166,7 @@ var _ = Describe("Cmd", func() {
 				CreateListCommand(),
 				CreateEditCmd(),
 				CreateAddCmd(),
+				CreateDeleteCommand(),
 			)
 
 		}
