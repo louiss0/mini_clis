@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
+Copyright © 2024 Your Name
 */
 package cmd
 
@@ -22,12 +22,12 @@ const (
 	COMPLETE    = "complete"
 )
 
-// CreateEditCmd represents the creation of the  edit command
+// CreateEditCmd represents the creation of the edit command
 var CreateEditCmd = func() *cobra.Command {
 
 	editCommand := &cobra.Command{
 		Use:          "edit",
-		Short:        "Edit's a task",
+		Short:        "Edits a task",
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
 		Long: `A task can be edited by using it's id.
@@ -39,52 +39,43 @@ var CreateEditCmd = func() *cobra.Command {
 
 			id := args[0]
 
-			tasks, error := task.ReadTasks()
+			tasks, err := task.ReadTasks()
 
-			if error != nil {
-				return error
+			if err != nil {
+				return err
 			}
 
 			foundTask, ok := lo.Find(tasks, func(task task.Task) bool {
-
 				return task.Id() == id
-
 			})
 
 			if !ok {
-
 				return fmt.Errorf(
 					"%w Task with this id wasn't found %s",
 					custom_errors.InvalidArgument,
 					id,
 				)
-
 			}
 
-			complete, completeError := cmd.Flags().GetString(COMPLETE)
-
-			title, titleError := cmd.Flags().GetString(TITLE)
-
-			description, descriptionError := cmd.Flags().GetString(DESCRIPTION)
-
-			priority, priorityError := cmd.Flags().GetString(PRIORITY)
+			complete, completeErr := cmd.Flags().GetString(COMPLETE)
+			title, titleErr := cmd.Flags().GetString(TITLE)
+			description, descriptionErr := cmd.Flags().GetString(DESCRIPTION)
+			priority, priorityErr := cmd.Flags().GetString(PRIORITY)
 
 			flagErrors := errors.Join(
-				titleError,
-				completeError,
-				descriptionError,
-				priorityError,
+				titleErr,
+				completeErr,
+				descriptionErr,
+				priorityErr,
 			)
 
 			if flagErrors != nil {
-
 				return custom_errors.CreateInvalidFlagErrorWithMessage(
 					flagErrors.Error(),
 				)
 			}
 
 			if title != "" && foundTask.Title != title {
-
 				foundTask.Title = title
 				foundTask.UpdatedAt = time.Now()
 			}
@@ -92,50 +83,50 @@ var CreateEditCmd = func() *cobra.Command {
 			if description != "" && foundTask.Description != description {
 				foundTask.Description = description
 				foundTask.UpdatedAt = time.Now()
-
 			}
 
 			if priority != "" {
-				parsedPriority, error := task.ParsePriority(priority)
+				parsedPriority, err := task.ParsePriority(priority)
 
-				if error != nil {
-					return error
+				if err != nil {
+					return err
 				}
 
 				if parsedPriority.Value() != foundTask.Priority.Value() {
 					foundTask.Priority = parsedPriority
 					foundTask.UpdatedAt = time.Now()
-
 				}
-
 			}
 
 			if complete != "" {
+				if complete != "true" && complete != "false" {
+					return custom_errors.CreateInvalidFlagErrorWithMessage(
+						"complete flag must be either 'true' or 'false'",
+					)
+				}
 
-				parsedBool, error := strconv.ParseBool(complete)
+				parsedBool, err := strconv.ParseBool(complete)
 
-				if error != nil {
-					return error
+				if err != nil {
+					return err
 				}
 
 				if strconv.FormatBool(foundTask.Complete) != complete {
 					foundTask.Complete = parsedBool
 					foundTask.UpdatedAt = time.Now()
-
 				}
-
 			}
 
-			task.SaveTasks(lo.Map(tasks, func(item task.Task, index int) task.Task {
-
+			if err := task.SaveTasks(lo.Map(tasks, func(item task.Task, index int) task.Task {
 				return lo.If(item.Id() == foundTask.Id(), foundTask).Else(item)
+			})); err != nil {
+				return err
+			}
 
-			}))
+			taskAsJSON, err := foundTask.ToJSON()
 
-			taskAsJSON, error := foundTask.ToJSON()
-
-			if error != nil {
-				return error
+			if err != nil {
+				return err
 			}
 
 			fmt.Printf("Here is the task %s\n", id)
@@ -149,25 +140,19 @@ var CreateEditCmd = func() *cobra.Command {
 	}
 
 	editCommand.Flags().String(TITLE, "", "Set the title of the task")
-	editCommand.Flags().String(DESCRIPTION, "", "Set the desctiption of the task")
+	editCommand.Flags().String(DESCRIPTION, "", "Set the description of the task")
 	editCommand.Flags().String(PRIORITY, "", "Set the priority of the task")
-
+	editCommand.RegisterFlagCompletionFunc(
+		PRIORITY,
+		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			return task.AllowedProrities, cobra.ShellCompDirectiveDefault
+		},
+	)
 	editCommand.Flags().String(COMPLETE, "", "Mark task complete or not")
 
 	return editCommand
-
 }
 
 func init() {
 	rootCmd.AddCommand(CreateEditCmd())
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// editCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// editCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
