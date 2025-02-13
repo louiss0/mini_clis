@@ -890,9 +890,34 @@ var _ = Describe("Cmd", func() {
 
 		})
 
-		PIt(
+		It(
 			"deletes all tasks with a title when the title flag is set using the arg",
 			func() {
+
+				oldTasks, _ := getMockPersistedTasks()
+
+				randomPersistedTask, _ := getRandomPersistedTask(oldTasks)
+
+				output, error := executeCommand(
+					rootCmd,
+					"delete",
+					randomPersistedTask.Title,
+					createFlag(TITLE),
+				)
+
+				assert.NoError(error)
+				assert.NotEmpty(output)
+
+				newTasks, _ := getMockPersistedTasks()
+
+				assertTasksAreADifferentLengths(
+					oldTasks,
+					newTasks,
+					fmt.Sprintf(
+						"A task with this title wasn't deleted %s",
+						randomPersistedTask.Id,
+					),
+				)
 
 			},
 		)
