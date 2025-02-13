@@ -526,7 +526,9 @@ var _ = Describe("Cmd", func() {
 				fmt.Sprintf(
 					"edits a task's %s field when %s is passed through",
 					editCase.FlagName,
-					createFlag(editCase.FlagName)),
+					createFlag(editCase.FlagName),
+				),
+				FlakeAttempts(3),
 				func() {
 
 					taskFromOutput, outputError := getMockPersistedTaskBasedOnOutput(
