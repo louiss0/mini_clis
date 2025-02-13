@@ -77,9 +77,19 @@ func CreateDeleteCommand() *cobra.Command {
 				)
 			}
 
-			filteredTasks := lo.Filter(tasks, func(item task.Task, index int) bool {
-				return item.Id() != firstArgument
-			})
+			filteredTasks := lo.If(
+				priority,
+				lo.Filter(tasks, func(item task.Task, index int) bool {
+
+					parsedPriority, _ := task.ParsePriority(firstArgument)
+
+					return item.Priority != parsedPriority
+				})).
+				Else(
+					lo.Filter(tasks, func(item task.Task, index int) bool {
+						return item.Id() != firstArgument
+					}),
+				)
 
 			if len(tasks) == len(filteredTasks) {
 
