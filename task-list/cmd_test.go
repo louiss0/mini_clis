@@ -919,7 +919,7 @@ var _ = Describe("Cmd", func() {
 					newTasks,
 					fmt.Sprintf(
 						"A task with this title wasn't deleted %s",
-						randomPersistedTask.Id,
+						randomPersistedTask.Title,
 					),
 				)
 
