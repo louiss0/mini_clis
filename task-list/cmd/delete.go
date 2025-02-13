@@ -18,146 +18,128 @@ const COMPLETION = "completion"
 const INCOMPLETE = "incomplete"
 
 var allowedCompletionValues = []string{
-	COMPLETE,
-	INCOMPLETE,
+    COMPLETE,
+    INCOMPLETE,
 }
 
 // deleteCmd represents the delete command
 func CreateDeleteCommand() *cobra.Command {
-	var deleteCmd = &cobra.Command{
-		Use:   "delete",
-		Short: "Delete a task based on an id",
-		Long: `You can delete a task based on an Id.
-			The flags in this command allow you to pass in
-			a title or delete tasks with specific properties.
-		`,
-		SilenceUsage: true,
-		Args:         cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
+    var deleteCmd = &cobra.Command{
+        Use:          "delete",
+        Short:        "Delete a task based on an id",
+        Long: `You can delete a task based on an Id.
+The flags in this command allow you to pass in
+a title or delete tasks with specific properties.
+`,
+        SilenceUsage: true,
+        Args:         cobra.ExactArgs(1),
+        RunE: func(cmd *cobra.Command, args []string) error {
+            tasks, error := task.ReadTasks()
 
-			tasks, error := task.ReadTasks()
+            if error != nil {
+                return error
+            }
 
-			if error != nil {
-				return error
-			}
+            firstArgument := args[0]
 
-			firstArgument := args[0]
+            title, titleError := cmd.Flags().GetBool(TITLE)
+            completion, completionError := cmd.Flags().GetBool(COMPLETION)
+            priority, priorityError := cmd.Flags().GetBool(PRIORITY)
 
-			title, titleError := cmd.Flags().GetBool(TITLE)
-			completion, completionError := cmd.Flags().GetBool(COMPLETION)
-			priority, priorityError := cmd.Flags().GetBool(PRIORITY)
+            flagErrors := errors.Join(titleError, completionError, priorityError)
 
-			flagErrors := errors.Join(titleError, completionError, priorityError)
+            if flagErrors != nil {
+                return custom_errors.CreateInvalidFlagErrorWithMessage(
+                    flagErrors.Error(),
+                )
+            }
 
-			if flagErrors != nil {
+            if completion && !lo.Contains(allowedCompletionValues, firstArgument) {
+                return custom_errors.CreateInvalidArgumentErrorWithMessage(
+                    fmt.Sprintf(
+                        "When you use the %s flag you must pass in the %s",
+                        COMPLETION,
+                        strings.Join(allowedCompletionValues, ","),
+                    ),
+                )
+            }
 
-				return custom_errors.CreateInvalidFlagErrorWithMessage(
-					flagErrors.Error(),
-				)
-			}
+            if priority && !lo.Contains(task.AllowedProrities, firstArgument) {
+                return custom_errors.CreateInvalidArgumentErrorWithMessage(
+                    fmt.Sprintf(
+                        "When you use the %s flag you must pass in the %s",
+                        PRIORITY,
+                        strings.Join(task.AllowedProrities, ","),
+                    ),
+                )
+            }
 
-			if completion && !lo.Contains(allowedCompletionValues, firstArgument) {
+            filteredTasks := lo.If(
+                priority,
+                lo.Filter(tasks, func(item task.Task, index int) bool {
+                    parsedPriority, _ := task.ParsePriority(firstArgument)
+                    return item.Priority != parsedPriority
+                })).
+                ElseIf(
+                    completion && firstArgument == COMPLETE,
+                    lo.Filter(tasks, func(item task.Task, index int) bool {
+                        return item.Complete == true
+                    })).
+                ElseIf(
+                    completion && firstArgument == INCOMPLETE,
+                    lo.Filter(tasks, func(item task.Task, index int) bool {
+                        return item.Complete == false
+                    })).
+                ElseIf(
+                    title,
+                    lo.Filter(tasks, func(item task.Task, index int) bool {
+                        return item.Title != firstArgument
+                    })).
+                Else(
+                    lo.Filter(tasks, func(item task.Task, index int) bool {
+                        return item.Id() != firstArgument
+                    }),
+                )
 
-				return custom_errors.CreateInvalidArgumentErrorWithMessage(
-					fmt.Sprintf(
-						"When you use the %s flag you must pass in the %s",
-						COMPLETION,
-						strings.Join(allowedCompletionValues, ","),
-					),
-				)
-			}
+            if len(tasks) == len(filteredTasks) {
+                return custom_errors.CreateInvalidArgumentErrorWithMessage(
+                    fmt.Sprintf("A task with this id %s doesn't exist", firstArgument),
+                )
+            }
 
-			if priority && !lo.Contains(task.AllowedProrities, firstArgument) {
+            if error := task.SaveTasks(filteredTasks); error != nil {
+                return error
+            }
 
-				return custom_errors.CreateInvalidArgumentErrorWithMessage(
-					fmt.Sprintf(
-						"When you use the %s flag you must pass in the %s",
-						PRIORITY,
-						strings.Join(task.AllowedProrities, ","),
-					),
-				)
-			}
+            fmt.Fprintln(
+                cmd.OutOrStdout(),
+                fmt.Sprintf(
+                    "A task with this ID was deleted %s",
+                    firstArgument,
+                ),
+            )
 
-			filteredTasks := lo.If(
-				priority,
-				lo.Filter(tasks, func(item task.Task, index int) bool {
+            return nil
+        },
+    }
 
-					parsedPriority, _ := task.ParsePriority(firstArgument)
+    allowedFlagNames := []string{PRIORITY, COMPLETION, TITLE}
 
-					return item.Priority != parsedPriority
-				})).
-				ElseIf(
-					completion && firstArgument == COMPLETE,
-					lo.Filter(tasks, func(item task.Task, index int) bool {
-						return item.Complete == true
-					})).
-				ElseIf(
-					completion && firstArgument == INCOMPLETE,
-					lo.Filter(tasks, func(item task.Task, index int) bool {
-						return item.Complete == false
-					})).
-				ElseIf(
-					title,
-					lo.Filter(tasks, func(item task.Task, index int) bool {
-						return item.Title != firstArgument
-					})).
-				Else(
-					lo.Filter(tasks, func(item task.Task, index int) bool {
-						return item.Id() != firstArgument
-					}),
-				)
+    deleteCmdFlags := deleteCmd.Flags()
 
-			if len(tasks) == len(filteredTasks) {
+    lo.ForEach(allowedFlagNames, func(item string, index int) {
+        deleteCmdFlags.Bool(
+            item,
+            false,
+            fmt.Sprintf("Delete tasks based on %s", item),
+        )
+    })
 
-				return custom_errors.CreateInvalidArgumentErrorWithMessage(
-					fmt.Sprintf("A task with this id %s doesn't exist", firstArgument),
-				)
+    deleteCmd.MarkFlagsMutuallyExclusive(allowedFlagNames...)
 
-			}
-
-			task.SaveTasks(filteredTasks)
-
-			fmt.Fprintln(
-				cmd.OutOrStdout(),
-				fmt.Sprintf(
-					"A task with this ID was deleted %s",
-					firstArgument,
-				),
-			)
-
-			return nil
-		},
-	}
-
-	allowedFlagNames := []string{PRIORITY, COMPLETION, TITLE}
-
-	deleteCmdFlags := deleteCmd.Flags()
-
-	lo.ForEach(allowedFlagNames, func(item string, index int) {
-
-		deleteCmdFlags.Bool(
-			item,
-			false,
-			fmt.Sprintf("Delete tasks based on %s", item),
-		)
-
-	})
-
-	deleteCmd.MarkFlagsMutuallyExclusive(allowedFlagNames...)
-
-	return deleteCmd
+    return deleteCmd
 }
 
 func init() {
-	rootCmd.AddCommand(CreateDeleteCommand())
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// deleteCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// deleteCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+    rootCmd.AddCommand(CreateDeleteCommand())
 }
