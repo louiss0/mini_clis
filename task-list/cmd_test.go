@@ -758,6 +758,64 @@ var _ = Describe("Cmd", func() {
 
 		})
 
+		Context("Deleting tasks", func() {
+
+			var oldPersistedTasks []mockPersistedTask
+
+			BeforeAll(func() {
+
+				tasks, error := getMockPersistedTasks()
+
+				assert.NoError(error)
+
+				assert.NotEmpty(tasks)
+
+				oldPersistedTasks = tasks
+
+			})
+
+			var mockTask mockPersistedTask
+
+			BeforeEach(func() {
+
+				storageTask, storageError := getRandomPersistedTask(oldPersistedTasks)
+
+				mockTask = storageTask
+				assert.NoError(storageError)
+				assert.NotEmpty(storageTask)
+
+			})
+
+			It("works", func() {
+
+				taskFromOutput, error := getMockPersistedTaskBasedOnOutput(
+					executeCommand(rootCmd, "delete", mockTask.Id),
+				)
+
+				assert.NoError(error)
+
+				assert.NotEmpty(taskFromOutput)
+
+				newPersistedTasks, error := getMockPersistedTasks()
+
+				oldPersistedTasksLength := len(oldPersistedTasks)
+				newPersistedTaskslength := len(newPersistedTasks)
+
+				assert.Truef(
+					oldPersistedTasksLength > newPersistedTaskslength,
+					strings.Join([]string{
+						"The task with this id wasn't deleted %s",
+						"oldPersistedTasksLength %d",
+						"newPersistedTaskslength %d",
+					},
+						"\n",
+					),
+				)
+
+			})
+
+		})
+
 	})
 
 })
