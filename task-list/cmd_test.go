@@ -932,7 +932,7 @@ var _ = Describe("Cmd", func() {
 					rootCmd,
 					"delete",
 					"complete",
-					createFlag(TITLE),
+					createFlag(COMPLETION),
 				)
 
 				assert.NoError(error)
@@ -957,7 +957,7 @@ var _ = Describe("Cmd", func() {
 					rootCmd,
 					"delete",
 					"incomplete",
-					createFlag(TITLE),
+					createFlag(COMPLETION),
 				)
 
 				assert.NoError(error)
