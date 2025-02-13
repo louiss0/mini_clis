@@ -14,87 +14,73 @@ import (
 
 // addCmd represents the add command
 func CreateAddCmd() *cobra.Command {
+    command := &cobra.Command{
+        Use:   "add",
+        Short: "Add a task to the list of tasks",
+        Long: `This command allows you to add a task to the list.
+    When you do you must supply a title for your task. you decide to store a task you can set other things using flags.
+    The first argument will be the task title the second is the description.
+    You can decide a priority by passing in the --priority flag.
+    `,
+        Args: cobra.RangeArgs(1, 2),
+        RunE: func(cmd *cobra.Command, args []string) error {
+            tasks, error := task.ReadTasks()
 
-	command := &cobra.Command{
-		Use:   "add",
-		Short: "Add a task to the list of tasks",
-		Long: `This command allows you to add a task to the list.
-	When you do you must supply a title for your task. you decide to store a task you can set other things using flags.
-	The first argument will be the task title the second is the description.
-	You can decide a priority by passing in the --priority flag.
-	`,
-		Args: cobra.RangeArgs(1, 2),
-		RunE: func(cmd *cobra.Command, args []string) error {
+            if error != nil {
+                return error
+            }
 
-			tasks, error := task.ReadTasks()
+            title, description := args[0], lo.TernaryF(
+                len(args) == 2,
+                func() string { return args[1] },
+                func() string { return "" },
+            )
 
-			if error != nil {
-				return error
-			}
+            newTask := task.NewTask(title, description)
 
-			title, description := args[0], lo.TernaryF(
-				len(args) == 2,
-				func() string { return args[1] },
-				func() string { return "" },
-			)
+            priorityFlag, error := cmd.Flags().GetString(PRIORITY)
 
-			newTask := task.NewTask(title, description)
+            if error != nil {
+                return error
+            }
 
-			priorityFlag, priorityFlagError := cmd.Flags().GetString(PRIORITY)
+            if priorityFlag != "" {
+                priority, error := task.ParsePriority(priorityFlag)
 
-			if priorityFlagError != nil {
-				return priorityFlagError
-			}
+                if error != nil {
+                    return error
+                }
 
-			if priorityFlag != "" {
+                newTask.Priority = priority
+            }
 
-				priority, error := task.ParsePriority(priorityFlag)
+            if error := task.SaveTasks(slices.Insert(tasks, 0, newTask)); error != nil {
+                return error
+            }
 
-				if error != nil {
-					return error
-				}
+            fmt.Println("This is the task you added")
 
-				newTask.Priority = priority
+            taskAsJSON, error := newTask.ToJSON()
 
-			}
+            if error != nil {
+                return error
+            }
 
-			task.SaveTasks(slices.Insert(tasks, 0, newTask))
+            fmt.Fprint(cmd.OutOrStdout(), taskAsJSON)
 
-			fmt.Println("This is the task you added")
+            return nil
+        },
+    }
 
-			taskAsJson, unmarshallError := newTask.ToJSON()
+    command.Flags().StringP(PRIORITY, "p", "", "Decide the priority of a task")
 
-			if unmarshallError != nil {
-				return unmarshallError
-			}
+    command.RegisterFlagCompletionFunc(PRIORITY, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+        return task.AllowedProrities, cobra.ShellCompDirectiveDefault
+    })
 
-			fmt.Fprint(cmd.OutOrStdout(), taskAsJson)
-
-			return nil
-		},
-	}
-
-	command.Flags().StringP(PRIORITY, "p", "", "Decide the priority of a task")
-
-	command.RegisterFlagCompletionFunc(PRIORITY, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-
-		return task.AllowedProrities, cobra.ShellCompDirectiveDefault
-
-	})
-
-	return command
+    return command
 }
 
 func init() {
-	rootCmd.AddCommand(CreateAddCmd())
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// addCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// addCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+    rootCmd.AddCommand(CreateAddCmd())
 }
