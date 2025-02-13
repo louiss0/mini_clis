@@ -15,10 +15,11 @@ import (
 )
 
 const COMPLETION = "completion"
+const INCOMPLETE = "incomplete"
 
 var allowedCompletionValues = []string{
-	"complete",
-	"incomplete",
+	COMPLETE,
+	INCOMPLETE,
 }
 
 // deleteCmd represents the delete command
@@ -85,6 +86,16 @@ func CreateDeleteCommand() *cobra.Command {
 
 					return item.Priority != parsedPriority
 				})).
+				ElseIf(
+					completion && firstArgument == COMPLETE,
+					lo.Filter(tasks, func(item task.Task, index int) bool {
+						return item.Complete == true
+					})).
+				ElseIf(
+					completion && firstArgument == INCOMPLETE,
+					lo.Filter(tasks, func(item task.Task, index int) bool {
+						return item.Complete == false
+					})).
 				ElseIf(
 					title,
 					lo.Filter(tasks, func(item task.Task, index int) bool {
