@@ -19,7 +19,8 @@ func CreateAddCmd() *cobra.Command {
 		Short: "Add a task to the list of tasks",
 		Long: `This command allows you to add a task to the list.
 	When you do you must supply a title for your task. you decide to store a task you can set other things using flags.
-	Each flag will be dedicated to helping create a task.
+	The first argument will be the task title the second is the description.
+	You can decide a priority by passing in the --priority flag.
 	`,
 		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -30,7 +31,8 @@ func CreateAddCmd() *cobra.Command {
 				return error
 			}
 
-			title, description := args[0], lo.TernaryF(len(args) == 2,
+			title, description := args[0], lo.TernaryF(
+				len(args) == 2,
 				func() string { return args[1] },
 				func() string { return "" },
 			)
