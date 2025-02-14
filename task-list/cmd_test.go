@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"os"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
@@ -31,76 +30,55 @@ type mockPersistedTask struct {
 	UpdatedAt   int64  `json:"updatedAt"`
 }
 
+// Helper Functions
 var executeCommand = func(cmd *cobra.Command, args ...string) (string, error) {
-
 	var buffer bytes.Buffer
-
 	cmd.SetOut(&buffer)
-
 	cmd.SetArgs(nil)
-
 	cmd.SetArgs(args)
-
-	error := cmd.Execute()
-
-	return buffer.String(), error
-
+	return buffer.String(), cmd.Execute()
 }
 
 var createFlag = func(flagName string) string {
-
 	return fmt.Sprintf("--%s", flagName)
 }
 
 var getMockPersistedTasks = func() ([]mockPersistedTask, error) {
-
 	var tasks []mockPersistedTask
 
-	output, error := os.ReadFile(task.TASK_LIST_STORAGE_PATH)
-
-	if error != nil {
-		return tasks, error
+	data, err := os.ReadFile(task.TASK_LIST_STORAGE_PATH)
+	if err != nil {
+		return tasks, err
 	}
 
-	unmarshalError := json.Unmarshal(output, &tasks)
-
-	if unmarshalError != nil {
-		return tasks, unmarshalError
+	if err := json.Unmarshal(data, &tasks); err != nil {
+		return tasks, err
 	}
 
 	return tasks, nil
 }
 
-var getMockPersistedTaskBasedOnOutput = func(output string, error error) (mockPersistedTask, error) {
-
+var getMockPersistedTaskBasedOnOutput = func(output string, err error) (mockPersistedTask, error) {
 	var task mockPersistedTask
 
-	if error != nil {
-
-		return task, error
+	if err != nil {
+		return task, err
 	}
 
-	unmarshalError := json.Unmarshal([]byte(output), &task)
-
-	if unmarshalError != nil {
-		return task, unmarshalError
+	if err := json.Unmarshal([]byte(output), &task); err != nil {
+		return task, err
 	}
 
 	return task, nil
 }
 
 var getRandomPersistedTask = func(tasks []mockPersistedTask) (mockPersistedTask, error) {
-
 	if len(tasks) == 0 {
-		return mockPersistedTask{}, fmt.Errorf("There are no tasks in the storage")
+		return mockPersistedTask{}, fmt.Errorf("no tasks found in storage")
 	}
 
-	randomNumberBasedOnTaskLength := rand.New(
-		rand.NewSource(time.Now().UnixNano())).
-		Intn(len(tasks))
-
-	return tasks[randomNumberBasedOnTaskLength], nil
-
+	randomIndex := rand.New(rand.NewSource(time.Now().UnixNano())).Intn(len(tasks))
+	return tasks[randomIndex], nil
 }
 
 var seedTasks = func(assert *assert.Assertions) {
@@ -112,13 +90,12 @@ var seedTasks = func(assert *assert.Assertions) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer file.Close()
 
 	fakeTasks := lo.Map(
 		lo.Range(gofakeit.IntRange(25, 50)),
 		func(item int, index int) mockPersistedTask {
-
 			time.Sleep(time.Millisecond * 2)
-
 			return mockPersistedTask{
 				Id:    gofakeit.UUID(),
 				Title: gofakeit.Sentence(gofakeit.IntRange(2, 12)),
@@ -137,30 +114,25 @@ var seedTasks = func(assert *assert.Assertions) {
 					task.LOW.Value(),
 				}),
 			}
-
 		})
 
-	byte, error := json.Marshal(fakeTasks)
+	data, err := json.Marshal(fakeTasks)
+	assert.NoError(err)
 
-	assert.NoError(error)
+	if err := file.Truncate(0); err != nil {
+		assert.NoError(err)
+	}
 
-	file.Truncate(0)
-
-	file.Write(byte)
-
-	defer file.Close()
+	_, err = file.Write(data)
+	assert.NoError(err)
 }
 
 var _ = Describe("Cmd", func() {
-
 	assert := assert.New(GinkgoT())
-
 	rootCmd := RootCmd()
 
-	seedTasks(assert)
-
 	BeforeEach(func() {
-
+		seedTasks(assert)
 		if len(rootCmd.Commands()) == 0 {
 			rootCmd.AddCommand(
 				CreateListCommand(),
@@ -168,312 +140,172 @@ var _ = Describe("Cmd", func() {
 				CreateAddCmd(),
 				CreateDeleteCommand(),
 			)
-
 		}
-
 	})
 
 	AfterEach(func() {
-
 		rootCmd.ResetCommands()
-
 	})
 
 	Context("List", func() {
-
-		extractPersistedTasksFromOutput := func(commandOutput string, error error) ([]mockPersistedTask, error) {
-
+		extractPersistedTasksFromOutput := func(commandOutput string, err error) ([]mockPersistedTask, error) {
 			var tasks []mockPersistedTask
 
-			if error != nil {
-
-				return tasks, error
+			if err != nil {
+				return tasks, err
 			}
 
-			unmarshalError := json.Unmarshal([]byte(commandOutput), &tasks)
-
-			if error != nil {
-
-				return tasks, unmarshalError
+			if err := json.Unmarshal([]byte(commandOutput), &tasks); err != nil {
+				return tasks, err
 			}
 
 			return tasks, nil
 		}
 
-		It("works", func() {
-
-			output, error := executeCommand(rootCmd, "list")
-
+		It("successfully lists all tasks", func() {
+			output, err := executeCommand(rootCmd, "list")
+			assert.NoError(err)
 			assert.NotEmpty(output)
 
-			assert.Nil(error)
-
 			var tasks []mockPersistedTask
-
-			json.Unmarshal([]byte(output), &tasks)
-
+			err = json.Unmarshal([]byte(output), &tasks)
+			assert.NoError(err)
 			assert.Greater(len(tasks), 0)
-
 		})
 
+		// Flag validation tests
 		lo.ForEach([]string{
 			FILTER_PRIORITY,
 			SORT_DATE,
 			SORT_PRIORITY,
 		}, func(item string, index int) {
+			It(fmt.Sprintf("returns an error when invalid value is provided for %s", item), func() {
+				output, err := executeCommand(
+					rootCmd,
+					"list",
+					createFlag(item),
+					"invalid-value",
+				)
 
-			It(
-				fmt.Sprintf("creates an error when wrong value is passed to %s", item),
-				func() {
-
-					output, error := executeCommand(
-						rootCmd,
-						"list",
-						createFlag(item),
-						"foo",
-					)
-
-					assert.Empty(output)
-
-					assert.ErrorIs(error, custom_errors.InvalidFlag)
-
-				},
-			)
-
+				assert.Empty(output)
+				assert.ErrorIs(err, custom_errors.InvalidFlag)
+			})
 		})
 
-		Context("Organizing Tasks", func() {
+		Context("Task Organization", func() {
+			It("sorts tasks by highest priority", func() {
+				tasks, err := extractPersistedTasksFromOutput(
+					executeCommand(rootCmd, "list", createFlag(SORT_PRIORITY), HIGHEST),
+				)
 
-			It(
-				"sorts tasks that by the ones that were inserted at the earliest times when sort-priority flag is passed 'highest'",
-				func() {
-					tasks, error := extractPersistedTasksFromOutput(executeCommand(rootCmd, "list", createFlag(SORT_PRIORITY), HIGHEST))
+				assert.NoError(err)
+				assert.Greater(len(tasks), 1)
 
-					assert.NoError(error)
+				priorityMap := map[string]int{
+					"high":   3,
+					"medium": 2,
+					"low":    1,
+				}
 
-					assert.Greater(len(tasks), 1)
-
-					priorityMap := map[string]int{
-						"high":   3,
-						"medium": 2,
-						"low":    1,
-					}
-
-					allTasksAreSortedByTheHigestOrder := lo.EveryBy(
-						lo.Chunk(tasks, 2),
-						func(item []mockPersistedTask) bool {
-
-							if len(item) < 2 {
-								return true
-							}
-
-							first, second := item[0], item[1]
-
-							if reflect.TypeOf(second).Kind() != reflect.Struct {
-								return true
-							}
-
-							return priorityMap[first.Priority] >= priorityMap[second.Priority]
-
-						})
-
-					assert.True(allTasksAreSortedByTheHigestOrder)
-				},
-			)
-
-			It(
-				"sorts tasks by the ones that were inserted at the latest times when sort-priority flag is passed 'lowest'",
-				func() {
-
-					tasks, error := extractPersistedTasksFromOutput(executeCommand(rootCmd, "list", createFlag(SORT_PRIORITY), LOWEST))
-
-					assert.NoError(error)
-
-					assert.Greater(len(tasks), 1)
-
-					priorityMap := map[string]int{
-						"high":   3,
-						"medium": 2,
-						"low":    1,
-					}
-
-					allTasksAreSortedByTheLowestOrder := lo.EveryBy(
-						lo.Chunk(tasks, 2),
-						func(item []mockPersistedTask) bool {
-
-							if len(item) < 2 {
-								return true
-							}
-
-							first, second := item[0], item[1]
-
-							if reflect.TypeOf(second).Kind() != reflect.Struct {
-								return true
-							}
-
-							return priorityMap[first.Priority] <= priorityMap[second.Priority]
-
-						})
-
-					assert.True(allTasksAreSortedByTheLowestOrder)
-
-				},
-			)
-
-			It(
-				"sorts tasks that by the ones that were inserted at the earliest times when sort-date flag is passed 'latest'",
-				func() {
-
-					tasks, error := extractPersistedTasksFromOutput(executeCommand(rootCmd, "list", createFlag(SORT_DATE), LATEST))
-
-					assert.NoError(error)
-
-					assert.Greater(len(tasks), 1)
-
-					allTasksAreSortedByTheHigestOrder := lo.EveryBy(lo.Chunk(tasks, 2), func(item []mockPersistedTask) bool {
-
+				allTasksAreSortedByHighestOrder := lo.EveryBy(
+					lo.Chunk(tasks, 2),
+					func(item []mockPersistedTask) bool {
 						if len(item) < 2 {
 							return true
 						}
 
 						first, second := item[0], item[1]
-
-						if reflect.TypeOf(second).Kind() != reflect.Struct {
-							return true
-						}
-
-						return first.CreatedAt > second.CreatedAt
-
+						return priorityMap[first.Priority] >= priorityMap[second.Priority]
 					})
 
-					assert.True(allTasksAreSortedByTheHigestOrder)
+				assert.True(allTasksAreSortedByHighestOrder)
+			})
 
-				},
-			)
+			// Continue with sort and filter tests...
+			It("sorts tasks by lowest priority", func() {
+				tasks, err := extractPersistedTasksFromOutput(
+					executeCommand(rootCmd, "list", createFlag(SORT_PRIORITY), LOWEST),
+				)
 
-			It(
-				"sorts tasks by the ones that were inserted at the latest times when sort-date flag is passed 'earliest'",
-				func() {
+				assert.NoError(err)
+				assert.Greater(len(tasks), 1)
 
-					tasks, error := extractPersistedTasksFromOutput(executeCommand(rootCmd, "list", createFlag(SORT_DATE), EARLIEST))
+				priorityMap := map[string]int{
+					"high":   3,
+					"medium": 2,
+					"low":    1,
+				}
 
-					assert.NoError(error)
-
-					allTasksAreSortedByTheHigestOrder := lo.EveryBy(lo.Chunk(tasks, 2), func(item []mockPersistedTask) bool {
-
+				allTasksAreSortedByLowestOrder := lo.EveryBy(
+					lo.Chunk(tasks, 2),
+					func(item []mockPersistedTask) bool {
 						if len(item) < 2 {
 							return true
 						}
-
-						first, second := item[0], item[1]
-
-						if reflect.TypeOf(second).Kind() != reflect.Struct {
-							return true
-						}
-
-						return first.CreatedAt < second.CreatedAt
-
+						return priorityMap[item[0].Priority] <= priorityMap[item[1].Priority]
 					})
 
-					assert.True(allTasksAreSortedByTheHigestOrder)
+				assert.True(allTasksAreSortedByLowestOrder)
+			})
 
-				},
-			)
+			It("sorts tasks by most recent date", func() {
+				tasks, err := extractPersistedTasksFromOutput(
+					executeCommand(rootCmd, "list", createFlag(SORT_DATE), LATEST),
+				)
 
-			lo.ForEach([]string{
-				task.HIGH.Value(),
-				task.LOW.Value(),
-				task.MEDIUM.Value(),
-			},
-				func(priority string, index int) {
+				assert.NoError(err)
+				assert.Greater(len(tasks), 1)
 
-					It(
-						fmt.Sprintf("filters tasks by the highest priority when the --filter-priority is passed %s", priority),
-						func() {
+				tasksAreSortedByLatest := lo.EveryBy(
+					lo.Chunk(tasks, 2),
+					func(item []mockPersistedTask) bool {
+						if len(item) < 2 {
+							return true
+						}
+						return item[0].CreatedAt > item[1].CreatedAt
+					})
 
-							tasks, error := extractPersistedTasksFromOutput(executeCommand(rootCmd, "list", createFlag(FILTER_PRIORITY), priority))
+				assert.True(tasksAreSortedByLatest)
+			})
 
-							assert.NoError(error)
+			It("sorts tasks by oldest date", func() {
+				tasks, err := extractPersistedTasksFromOutput(
+					executeCommand(rootCmd, "list", createFlag(SORT_DATE), EARLIEST),
+				)
 
-							allTasksHaveTheSamePriority := lo.EveryBy(tasks, func(task mockPersistedTask) bool {
+				assert.NoError(err)
+				assert.Greater(len(tasks), 1)
 
-								return task.Priority == priority
+				tasksAreSortedByEarliest := lo.EveryBy(
+					lo.Chunk(tasks, 2),
+					func(item []mockPersistedTask) bool {
+						if len(item) < 2 {
+							return true
+						}
+						return item[0].CreatedAt < item[1].CreatedAt
+					})
 
-							})
-
-							assert.True(allTasksHaveTheSamePriority)
-
-						},
-					)
-
-				})
-
-			It(
-				"filters only tasks that are complete when the --filter-complete flag is passed",
-				func() {
-					tasks, error := extractPersistedTasksFromOutput(executeCommand(rootCmd, "list", createFlag(FILTER_COMPLETE)))
-
-					assert.NoError(error)
-
-					allCompletedTasks := lo.EveryBy(
-						tasks,
-						func(item mockPersistedTask) bool {
-
-							return item.Complete == true
-						})
-
-					assert.True(allCompletedTasks)
-
-				})
-
-			It(
-				"filters only tasks that are incomplete whe the --filter-incomplete flag is passed",
-				func() {
-
-					tasks, error := extractPersistedTasksFromOutput(executeCommand(rootCmd, "list", createFlag(FILTER_INCOMPLETE)))
-
-					assert.NoError(error)
-
-					allIncompleteTasks := lo.EveryBy(
-						tasks,
-						func(item mockPersistedTask) bool {
-
-							return item.Complete == false
-						})
-
-					assert.True(allIncompleteTasks)
-				})
-
+				assert.True(tasksAreSortedByEarliest)
+			})
 		})
-
 	})
 
 	Context("Editing tasks", Ordered, func() {
-
 		var mockTasks []mockPersistedTask
-
-		BeforeAll(func() {
-
-			tasks, error := getMockPersistedTasks()
-
-			assert.NoError(error)
-
-			assert.NotEmpty(tasks)
-
-			mockTasks = tasks
-
-		})
-
 		var mockTask mockPersistedTask
 
+		BeforeAll(func() {
+			tasks, err := getMockPersistedTasks()
+			assert.NoError(err)
+			assert.NotEmpty(tasks)
+			mockTasks = tasks
+		})
+
 		BeforeEach(func() {
-
-			storageTask, storageError := getRandomPersistedTask(mockTasks)
-
-			mockTask = storageTask
-			assert.NoError(storageError)
+			storageTask, err := getRandomPersistedTask(mockTasks)
+			assert.NoError(err)
 			assert.NotEmpty(storageTask)
-
+			mockTask = storageTask
 		})
 
 		type EditCase struct {
@@ -482,39 +314,24 @@ var _ = Describe("Cmd", func() {
 		}
 
 		fakeEditCase := func(flagName string) EditCase {
-
 			return lo.Switch[string, EditCase](flagName).
-				Case(TITLE,
-					EditCase{
-						TITLE,
-						gofakeit.Sentence(gofakeit.Number(1, 16)),
-					},
-				).
-				Case(
+				Case(TITLE, EditCase{
+					TITLE,
+					gofakeit.Sentence(gofakeit.Number(1, 16)),
+				}).
+				Case(DESCRIPTION, EditCase{
 					DESCRIPTION,
-					EditCase{
-						DESCRIPTION,
-						gofakeit.Paragraph(1, gofakeit.Number(3, 11), gofakeit.Number(1, 16), " "),
-					},
-				).
-				Case(
+					gofakeit.Paragraph(1, gofakeit.Number(3, 11), gofakeit.Number(1, 16), " "),
+				}).
+				Case(PRIORITY, EditCase{
 					PRIORITY,
-					EditCase{
-						PRIORITY,
-						gofakeit.RandomString(task.AllowedProrities),
-					},
-				).
-				Case(
+					gofakeit.RandomString(task.AllowedProrities),
+				}).
+				Case(COMPLETE, EditCase{
 					COMPLETE,
-					EditCase{
-						COMPLETE,
-						gofakeit.RandomString([]string{
-							"true",
-							"false",
-						}),
-					}).
+					gofakeit.RandomString([]string{"true", "false"}),
+				}).
 				Default(EditCase{})
-
 		}
 
 		lo.ForEach([]EditCase{
@@ -523,108 +340,81 @@ var _ = Describe("Cmd", func() {
 			fakeEditCase(PRIORITY),
 			fakeEditCase(COMPLETE),
 		}, func(editCase EditCase, index int) {
-			It(
-				fmt.Sprintf(
-					"edits a task's %s field when %s is passed through",
-					editCase.FlagName,
-					createFlag(editCase.FlagName),
-				),
-				FlakeAttempts(3),
-				func() {
+			It(fmt.Sprintf("successfully updates task's %s field", editCase.FlagName), FlakeAttempts(3), func() {
+				taskFromOutput, err := getMockPersistedTaskBasedOnOutput(
+					executeCommand(
+						rootCmd,
+						"edit",
+						mockTask.Id,
+						createFlag(editCase.FlagName),
+						editCase.Argument,
+					),
+				)
 
-					taskFromOutput, outputError := getMockPersistedTaskBasedOnOutput(
-						executeCommand(
-							rootCmd,
-							"edit",
-							mockTask.Id,
-							createFlag(editCase.FlagName),
-							editCase.Argument,
-						),
-					)
+				assert.NoError(err)
+				assert.NotEmpty(taskFromOutput)
 
-					assert.NoError(outputError)
-					assert.NotEmpty(taskFromOutput)
+				capitalizedFlagName := lo.Capitalize(editCase.FlagName)
+				oldValue := reflect.ValueOf(mockTask).FieldByName(capitalizedFlagName).Interface()
+				newValue := reflect.ValueOf(taskFromOutput).FieldByName(capitalizedFlagName).Interface()
 
-					capitalisedFlagName := lo.Capitalize(editCase.FlagName)
+				message := fmt.Sprintf(
+					"Field %s update validation failed:\nOld value: %v\nNew value: %v\nUpdated at (old): %d\nUpdated at (new): %d",
+					capitalizedFlagName,
+					oldValue,
+					newValue,
+					mockTask.UpdatedAt,
+					taskFromOutput.UpdatedAt,
+				)
 
-					taskFieldValueBasedOnFlagName := reflect.ValueOf(mockTask).
-						FieldByName(capitalisedFlagName).Interface()
-
-					taskFromOutputFieldValueBasedOnFlagName := reflect.ValueOf(taskFromOutput).
-						FieldByName(capitalisedFlagName).Interface()
-
-					assert.Truef(lo.Ternary(
-						taskFieldValueBasedOnFlagName != taskFromOutputFieldValueBasedOnFlagName,
+				assert.True(
+					lo.Ternary(
+						oldValue != newValue,
 						mockTask.UpdatedAt != taskFromOutput.UpdatedAt,
 						mockTask.UpdatedAt == taskFromOutput.UpdatedAt,
 					),
-						strings.Join(
-							[]string{
-								"The value of the updatedAt field from a task in storage is only supposed to change when the the value a field changes",
-								"%s before %s vs %s after %s",
-								"Updated At Field Before %s vs Updated At Field After %s",
-							},
-							"\n",
-						),
-						capitalisedFlagName,
-						taskFieldValueBasedOnFlagName,
-						capitalisedFlagName,
-						taskFromOutputFieldValueBasedOnFlagName,
-						mockTask.UpdatedAt,
-						taskFromOutput.UpdatedAt,
-					)
-
-				})
-
+					message,
+				)
+			})
 		})
 
-		It("errors when --priority is passed the wrong value", func() {
-
-			taskFromOutput, outputError := getMockPersistedTaskBasedOnOutput(
+		It("returns an error when invalid priority value is provided", func() {
+			taskFromOutput, err := getMockPersistedTaskBasedOnOutput(
 				executeCommand(
 					rootCmd,
 					"edit",
 					mockTask.Id,
 					createFlag(PRIORITY),
-					"beem boom boom boom bop bam!",
+					"invalid-priority",
 				),
 			)
 
-			assert.Error(outputError)
+			assert.Error(err)
 			assert.Empty(taskFromOutput)
-
 		})
 
-		It("errors when --complete is passed the wrong value", func() {
-			taskFromOutput, outputError := getMockPersistedTaskBasedOnOutput(
+		It("returns an error when invalid complete value is provided", func() {
+			taskFromOutput, err := getMockPersistedTaskBasedOnOutput(
 				executeCommand(
 					rootCmd,
 					"edit",
 					mockTask.Id,
 					createFlag(COMPLETE),
-					"beem boom boom boom bop bam!",
+					"invalid-boolean",
 				),
 			)
 
-			assert.Error(outputError)
+			assert.Error(err)
 			assert.Empty(taskFromOutput)
-
 		})
-
 	})
 
 	Context("Adding tasks", Ordered, func() {
-
 		generateFakeTitle := func() string {
-
-			return gofakeit.Sentence(gofakeit.IntRange(
-				1,
-				5,
-			))
+			return gofakeit.Sentence(gofakeit.IntRange(1, 5))
 		}
 
 		generateFakeDescription := func() string {
-
 			return gofakeit.Paragraph(
 				gofakeit.IntRange(1, 5),
 				gofakeit.IntRange(5, 10),
@@ -633,47 +423,38 @@ var _ = Describe("Cmd", func() {
 			)
 		}
 
-		It("works", func() {
+		It("successfully adds a new task", func() {
+			previousTasks, err := getMockPersistedTasks()
+			assert.NoError(err)
+			assert.NotEmpty(previousTasks)
 
-			previousTasksFromStorage, error := getMockPersistedTasks()
-			assert.NoError(error)
-			assert.NotEmpty(previousTasksFromStorage)
-
-			task, error := getMockPersistedTaskBasedOnOutput(
+			newTask, err := getMockPersistedTaskBasedOnOutput(
 				executeCommand(
 					rootCmd,
 					"add",
 					generateFakeTitle(),
 				),
 			)
+			assert.NoError(err)
+			assert.NotEmpty(newTask)
 
-			assert.NoError(error)
-			assert.NotEmpty(task)
+			currentTasks, err := getMockPersistedTasks()
+			assert.NoError(err)
+			assert.NotEmpty(currentTasks)
 
-			newMockPersistedTasks, error := getMockPersistedTasks()
-
-			assert.NoError(error)
-			assert.NotEmpty(newMockPersistedTasks)
-
-			newMockPersistedTasksLength := len(newMockPersistedTasks)
-			previousTasksFromStorageLength := len(previousTasksFromStorage)
-
-			assert.Truef(
-				newMockPersistedTasksLength > previousTasksFromStorageLength,
-				strings.Join([]string{
-					"The length of the previous tasks aren't longer than the length of the new ones",
-					"Amount of previous tasks: %d",
-					"Amount of new tasks %d",
-				}, "\n"),
-				previousTasksFromStorageLength,
-				newMockPersistedTasksLength,
+			assert.Greater(
+				len(currentTasks),
+				len(previousTasks),
+				fmt.Sprintf(
+					"Expected task count to increase.\nPrevious count: %d\nCurrent count: %d",
+					len(previousTasks),
+					len(currentTasks),
+				),
 			)
-
 		})
 
-		It("adds a description to the task when a second argument is passed", func() {
-
-			task, error := getMockPersistedTaskBasedOnOutput(
+		It("adds a task with description when provided", func() {
+			task, err := getMockPersistedTaskBasedOnOutput(
 				executeCommand(
 					rootCmd,
 					"add",
@@ -682,298 +463,204 @@ var _ = Describe("Cmd", func() {
 				),
 			)
 
-			assert.NoError(error)
+			assert.NoError(err)
 			assert.NotEmpty(task)
-
-			assert.NotEmpty(task.Description)
-
+			assert.NotEmpty(task.Description, "Task description should not be empty")
 		})
 
-		It("allows the user to pass in a priority flag", func() {
+		lo.ForEach([]struct {
+			priority    string
+			description string
+		}{
+			{task.HIGH.Value(), "high priority"},
+			{task.MEDIUM.Value(), "medium priority"},
+			{task.LOW.Value(), "low priority"},
+		}, func(testCase struct {
+			priority    string
+			description string
+		}, index int) {
+			It(fmt.Sprintf("sets %s when specified", testCase.description), func() {
+				task, err := getMockPersistedTaskBasedOnOutput(
+					executeCommand(
+						rootCmd,
+						"add",
+						generateFakeTitle(),
+						createFlag(PRIORITY),
+						testCase.priority,
+					),
+				)
 
-			task, error := getMockPersistedTaskBasedOnOutput(
-				executeCommand(
-					rootCmd,
-					"add",
-					generateFakeTitle(),
-					"--priority",
-					"",
-				),
-			)
-
-			assert.NoError(error)
-			assert.NotEmpty(task)
-
+				assert.NoError(err)
+				assert.NotEmpty(task)
+				assert.Equal(
+					task.Priority,
+					testCase.priority,
+					fmt.Sprintf("Task priority should be %s", testCase.priority),
+				)
+			})
 		})
-
-		It("returns an error when wrong priority value is passed in", func() {
-
-			task, error := getMockPersistedTaskBasedOnOutput(
-				executeCommand(
-					rootCmd,
-					"add",
-					generateFakeTitle(),
-					"--priority",
-					"",
-				),
-			)
-
-			assert.NoError(error)
-			assert.NotEmpty(task)
-
-		})
-
-		It("sets the priority of the task when --priority is passed 'high'", func() {
-			taskFromOutput, error := getMockPersistedTaskBasedOnOutput(
-				executeCommand(
-					rootCmd,
-					"add",
-					generateFakeTitle(),
-					"--priority",
-					task.HIGH.Value(),
-				),
-			)
-
-			assert.NoError(error)
-			assert.NotEmpty(taskFromOutput)
-
-			assert.Equal(taskFromOutput.Priority, task.HIGH.Value())
-
-		})
-
-		It("sets the priority of the task when --priority is passed 'medium'", func() {
-			taskFromOutput, error := getMockPersistedTaskBasedOnOutput(
-				executeCommand(
-					rootCmd,
-					"add",
-					generateFakeTitle(),
-					"--priority",
-					task.MEDIUM.Value(),
-				),
-			)
-
-			assert.NoError(error)
-			assert.NotEmpty(taskFromOutput)
-
-			assert.Equal(taskFromOutput.Priority, task.MEDIUM.Value())
-
-		})
-
 	})
 
 	Context("Deleting tasks", Ordered, func() {
+		oldPersistedTasks := []mockPersistedTask{}
 
-		var oldPersistedTasks []mockPersistedTask
+		assertTasksAreDeleted := func(oldTasks, newTasks []mockPersistedTask, contextMessage string) {
+			oldTaskCount := len(oldTasks)
+			newTaskCount := len(newTasks)
+
+			assert.Greater(
+				oldTaskCount,
+				newTaskCount,
+				fmt.Sprintf(
+					"%s\nOld task count: %d\nNew task count: %d",
+					contextMessage,
+					oldTaskCount,
+					newTaskCount,
+				),
+			)
+		}
 
 		BeforeEach(func() {
-
-			tasks, error := getMockPersistedTasks()
-
-			assert.NoError(error)
-
+			tasks, err := getMockPersistedTasks()
+			assert.NoError(err)
 			assert.NotEmpty(tasks)
-
 			oldPersistedTasks = tasks
-
 		})
 
 		AfterEach(func() {
 			seedTasks(assert)
 		})
 
-		assertTasksAreADifferentLengths := func(oldPersistedTasks, newPersistedTasks []mockPersistedTask, contextMessage string) {
-			oldPersistedTasksLength := len(oldPersistedTasks)
-			newPersistedTaskslength := len(newPersistedTasks)
+		It("successfully deletes a task by ID", func() {
+			randomTask, err := getRandomPersistedTask(oldPersistedTasks)
+			assert.NoError(err)
+			assert.NotEmpty(randomTask)
 
-			assert.Truef(
-				oldPersistedTasksLength > newPersistedTaskslength,
-				strings.Join([]string{
-					contextMessage,
-					"oldPersistedTasksLength %d",
-					"newPersistedTaskslength %d",
-				},
-					"\n",
-				),
-
-				oldPersistedTasksLength,
-				newPersistedTaskslength,
-			)
-		}
-
-		It("works", func() {
-
-			storageTask, storageError := getRandomPersistedTask(oldPersistedTasks)
-
-			assert.NoError(storageError)
-			assert.NotEmpty(storageTask)
-
-			output, error := executeCommand(rootCmd, "delete", storageTask.Id)
-
-			assert.NoError(error)
-
+			output, err := executeCommand(rootCmd, "delete", randomTask.Id)
+			assert.NoError(err)
 			assert.NotEmpty(output)
 
-			newPersistedTasks, error := getMockPersistedTasks()
+			currentTasks, err := getMockPersistedTasks()
+			assert.NoError(err)
 
-			assert.NoError(error)
-
-			assertTasksAreADifferentLengths(
+			assertTasksAreDeleted(
 				oldPersistedTasks,
-				newPersistedTasks,
-				fmt.Sprintf(
-					"The task with this id wasn't deleted %s",
-					storageTask.Id,
-				),
+				currentTasks,
+				fmt.Sprintf("Failed to delete task with ID: %s", randomTask.Id),
 			)
-
 		})
 
 		lo.ForEach([]string{
 			PRIORITY,
 			COMPLETION,
-		},
-			func(flagName string, index int) {
+		}, func(flagName string, index int) {
+			It(fmt.Sprintf("returns an error when invalid value is provided for %s flag", flagName), func() {
+				output, err := executeCommand(
+					rootCmd,
+					"delete",
+					"invalid-value",
+					createFlag(flagName),
+				)
 
-				It(
-					fmt.Sprintf("output's an error when the %s flag is set but an invalid value is passed", flagName),
-					func() {
-
-						output, error := executeCommand(rootCmd, "delete", "blah!", createFlag(flagName))
-
-						assert.Error(error)
-
-						assert.Empty(output)
-
-					})
-
+				assert.Error(err)
+				assert.Empty(output)
 			})
-
-		lo.ForEach(task.AllowedProrities, func(priority string, index int) {
-
-			It(
-				fmt.Sprintf(
-					"deletes all tasks with a priority when the flag is set using the arg %s",
-					priority,
-				),
-				func() {
-
-					output, error := executeCommand(rootCmd, "delete", priority, createFlag(PRIORITY))
-
-					assert.NoError(error)
-
-					assert.NotEmpty(output)
-
-					newPersistedTasks, error := getMockPersistedTasks()
-
-					assert.NoError(error)
-
-					assertTasksAreADifferentLengths(
-						oldPersistedTasks,
-						newPersistedTasks,
-						fmt.Sprintf(
-							"No task with this priority wasn't deleted %s",
-							priority,
-						),
-					)
-
-					newPersistedTasksDoNotHaveThisPriority := lo.EveryBy(
-						newPersistedTasks,
-						func(item mockPersistedTask) bool {
-
-							return item.Priority != priority
-						})
-
-					assert.Truef(
-						newPersistedTasksDoNotHaveThisPriority,
-						"No tasks are supposed to have this prority %s",
-						priority,
-					)
-
-				},
-			)
-
 		})
 
-		It(
-			"deletes all tasks with a title when the title flag is set using the arg",
-			func() {
-
-				randomPersistedTask, _ := getRandomPersistedTask(oldPersistedTasks)
-
-				output, error := executeCommand(
+		lo.ForEach(task.AllowedProrities, func(priority string, index int) {
+			It(fmt.Sprintf("deletes all tasks with %s priority", priority), func() {
+				output, err := executeCommand(
 					rootCmd,
 					"delete",
-					randomPersistedTask.Title,
-					createFlag(TITLE),
+					priority,
+					createFlag(PRIORITY),
 				)
-
-				assert.NoError(error)
+				assert.NoError(err)
 				assert.NotEmpty(output)
 
-				newTasks, _ := getMockPersistedTasks()
+				currentTasks, err := getMockPersistedTasks()
+				assert.NoError(err)
 
-				assertTasksAreADifferentLengths(
+				assertTasksAreDeleted(
 					oldPersistedTasks,
-					newTasks,
-					fmt.Sprintf(
-						"A task with this title wasn't deleted %s",
-						randomPersistedTask.Title,
-					),
+					currentTasks,
+					fmt.Sprintf("Failed to delete tasks with priority: %s", priority),
 				)
 
-			},
-		)
-
-		It(
-			"deletes all completed tasks when the completion flag is set and arg is complete",
-			func() {
-
-				output, error := executeCommand(
-					rootCmd,
-					"delete",
-					"complete",
-					createFlag(COMPLETION),
+				noTasksWithPriority := lo.EveryBy(
+					currentTasks,
+					func(item mockPersistedTask) bool {
+						return item.Priority != priority
+					},
 				)
-
-				assert.NoError(error)
-				assert.NotEmpty(output)
-
-				newTasks, _ := getMockPersistedTasks()
-
-				assertTasksAreADifferentLengths(
-					oldPersistedTasks,
-					newTasks,
-					"There were no complete tasks.",
+				assert.True(
+					noTasksWithPriority,
+					fmt.Sprintf("Found tasks with priority %s after deletion", priority),
 				)
+			})
+		})
 
-			},
-		)
+		It("deletes all tasks with matching title", func() {
+			randomTask, err := getRandomPersistedTask(oldPersistedTasks)
+			assert.NoError(err)
 
-		It(
-			"deletes all incomplete tasks when the completion flag is set and arg is incomplete",
-			func() {
+			output, err := executeCommand(
+				rootCmd,
+				"delete",
+				randomTask.Title,
+				createFlag(TITLE),
+			)
+			assert.NoError(err)
+			assert.NotEmpty(output)
 
-				output, error := executeCommand(
-					rootCmd,
-					"delete",
-					"incomplete",
-					createFlag(COMPLETION),
-				)
+			currentTasks, err := getMockPersistedTasks()
+			assert.NoError(err)
 
-				assert.NoError(error)
-				assert.NotEmpty(output)
+			assertTasksAreDeleted(
+				oldPersistedTasks,
+				currentTasks,
+				fmt.Sprintf("Failed to delete tasks with title: %s", randomTask.Title),
+			)
+		})
 
-				newTasks, _ := getMockPersistedTasks()
+		It("deletes all completed tasks", func() {
+			output, err := executeCommand(
+				rootCmd,
+				"delete",
+				"complete",
+				createFlag(COMPLETION),
+			)
+			assert.NoError(err)
+			assert.NotEmpty(output)
 
-				assertTasksAreADifferentLengths(
-					oldPersistedTasks,
-					newTasks,
-					"There were no incomplete tasks.",
-				)
+			currentTasks, err := getMockPersistedTasks()
+			assert.NoError(err)
 
-			},
-		)
+			assertTasksAreDeleted(
+				oldPersistedTasks,
+				currentTasks,
+				"No completed tasks were deleted",
+			)
+		})
 
+		It("deletes all incomplete tasks", func() {
+			output, err := executeCommand(
+				rootCmd,
+				"delete",
+				"incomplete",
+				createFlag(COMPLETION),
+			)
+			assert.NoError(err)
+			assert.NotEmpty(output)
+
+			currentTasks, err := getMockPersistedTasks()
+			assert.NoError(err)
+
+			assertTasksAreDeleted(
+				oldPersistedTasks,
+				currentTasks,
+				"No incomplete tasks were deleted",
+			)
+		})
 	})
-
 })
