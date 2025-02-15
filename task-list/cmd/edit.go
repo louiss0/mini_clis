@@ -4,12 +4,12 @@ Copyright © 2024 Your Name
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/mini-clis/task-list/custom_errors"
+	"github.com/mini-clis/task-list/flags"
 	"github.com/mini-clis/task-list/task"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -24,6 +24,11 @@ const (
 
 // CreateEditCmd represents the creation of the edit command
 var CreateEditCmd = func() *cobra.Command {
+
+	titleFlag := flags.NewEmptyStringFlag(TITLE)
+	descriptionFlag := flags.NewEmptyStringFlag(DESCRIPTION)
+	priorityFlag := flags.NewUnionFlag(task.AllowedProrities, PRIORITY)
+	completeFlag := flags.NewBoolFlag(COMPLETE)
 
 	editCommand := &cobra.Command{
 		Use:          "edit",
@@ -57,36 +62,18 @@ var CreateEditCmd = func() *cobra.Command {
 				)
 			}
 
-			complete, completeErr := cmd.Flags().GetString(COMPLETE)
-			title, titleErr := cmd.Flags().GetString(TITLE)
-			description, descriptionErr := cmd.Flags().GetString(DESCRIPTION)
-			priority, priorityErr := cmd.Flags().GetString(PRIORITY)
-
-			flagErrors := errors.Join(
-				titleErr,
-				completeErr,
-				descriptionErr,
-				priorityErr,
-			)
-
-			if flagErrors != nil {
-				return custom_errors.CreateInvalidFlagErrorWithMessage(
-					flagErrors.Error(),
-				)
-			}
-
-			if title != "" && foundTask.Title != title {
-				foundTask.Title = title
+			if titleFlag.String() != "" && foundTask.Title != titleFlag.String() {
+				foundTask.Title = titleFlag.String()
 				foundTask.UpdatedAt = time.Now()
 			}
 
-			if description != "" && foundTask.Description != description {
-				foundTask.Description = description
+			if descriptionFlag.String() != "" && foundTask.Description != descriptionFlag.String() {
+				foundTask.Description = descriptionFlag.String()
 				foundTask.UpdatedAt = time.Now()
 			}
 
-			if priority != "" {
-				parsedPriority, err := task.ParsePriority(priority)
+			if priorityFlag.String() != "" {
+				parsedPriority, err := task.ParsePriority(priorityFlag.String())
 
 				if err != nil {
 					return err
@@ -98,28 +85,21 @@ var CreateEditCmd = func() *cobra.Command {
 				}
 			}
 
-			if complete != "" {
-				if complete != "true" && complete != "false" {
-					return custom_errors.CreateInvalidFlagErrorWithMessage(
-						"complete flag must be either 'true' or 'false'",
-					)
-				}
+			if completeFlag.String() != "" {
 
-				parsedBool, err := strconv.ParseBool(complete)
+				if strconv.FormatBool(foundTask.Complete) != completeFlag.String() {
 
-				if err != nil {
-					return err
-				}
+					foundTask.Complete = completeFlag.Value()
 
-				if strconv.FormatBool(foundTask.Complete) != complete {
-					foundTask.Complete = parsedBool
 					foundTask.UpdatedAt = time.Now()
 				}
 			}
 
-			if err := task.SaveTasks(lo.Map(tasks, func(item task.Task, index int) task.Task {
+			updatedTasks := lo.Map(tasks, func(item task.Task, index int) task.Task {
 				return lo.If(item.Id() == foundTask.Id(), foundTask).Else(item)
-			})); err != nil {
+			})
+
+			if err := task.SaveTasks(updatedTasks); err != nil {
 				return err
 			}
 
@@ -139,16 +119,17 @@ var CreateEditCmd = func() *cobra.Command {
 		},
 	}
 
-	editCommand.Flags().String(TITLE, "", "Set the title of the task")
-	editCommand.Flags().String(DESCRIPTION, "", "Set the description of the task")
-	editCommand.Flags().String(PRIORITY, "", "Set the priority of the task")
+	editCommand.Flags().Var(&titleFlag, TITLE, "Set the title of the task")
+	editCommand.Flags().Var(&descriptionFlag, DESCRIPTION, "Set the description of the task")
+	editCommand.Flags().Var(&priorityFlag, PRIORITY, "Set the priority of the task")
 	editCommand.RegisterFlagCompletionFunc(
 		PRIORITY,
 		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			return task.AllowedProrities, cobra.ShellCompDirectiveDefault
 		},
 	)
-	editCommand.Flags().String(COMPLETE, "", "Mark task complete or not")
+
+	editCommand.Flags().Var(&completeFlag, COMPLETE, "Mark task complete or not")
 
 	return editCommand
 }

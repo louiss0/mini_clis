@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/mini-clis/task-list/flags"
 	"github.com/mini-clis/task-list/task"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
@@ -14,73 +15,70 @@ import (
 
 // addCmd represents the add command
 func CreateAddCmd() *cobra.Command {
-    command := &cobra.Command{
-        Use:   "add",
-        Short: "Add a task to the list of tasks",
-        Long: `This command allows you to add a task to the list.
+
+	priorityFlag := flags.NewUnionFlag(task.AllowedProrities, PRIORITY)
+
+	command := &cobra.Command{
+		Use:   "add",
+		Short: "Add a task to the list of tasks",
+		Long: `This command allows you to add a task to the list.
     When you do you must supply a title for your task. you decide to store a task you can set other things using flags.
     The first argument will be the task title the second is the description.
     You can decide a priority by passing in the --priority flag.
     `,
-        Args: cobra.RangeArgs(1, 2),
-        RunE: func(cmd *cobra.Command, args []string) error {
-            tasks, error := task.ReadTasks()
+		Args: cobra.RangeArgs(1, 2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			tasks, error := task.ReadTasks()
 
-            if error != nil {
-                return error
-            }
+			if error != nil {
+				return error
+			}
 
-            title, description := args[0], lo.TernaryF(
-                len(args) == 2,
-                func() string { return args[1] },
-                func() string { return "" },
-            )
+			title, description := args[0], lo.TernaryF(
+				len(args) == 2,
+				func() string { return args[1] },
+				func() string { return "" },
+			)
 
-            newTask := task.NewTask(title, description)
+			newTask := task.NewTask(title, description)
 
-            priorityFlag, error := cmd.Flags().GetString(PRIORITY)
+			if priorityFlag.String() != "" {
+				priority, error := task.ParsePriority(priorityFlag.String())
 
-            if error != nil {
-                return error
-            }
+				if error != nil {
+					return error
+				}
 
-            if priorityFlag != "" {
-                priority, error := task.ParsePriority(priorityFlag)
+				newTask.Priority = priority
+			}
 
-                if error != nil {
-                    return error
-                }
+			if error := task.SaveTasks(slices.Insert(tasks, 0, newTask)); error != nil {
+				return error
+			}
 
-                newTask.Priority = priority
-            }
+			fmt.Println("This is the task you added")
 
-            if error := task.SaveTasks(slices.Insert(tasks, 0, newTask)); error != nil {
-                return error
-            }
+			taskAsJSON, error := newTask.ToJSON()
 
-            fmt.Println("This is the task you added")
+			if error != nil {
+				return error
+			}
 
-            taskAsJSON, error := newTask.ToJSON()
+			fmt.Fprint(cmd.OutOrStdout(), taskAsJSON)
 
-            if error != nil {
-                return error
-            }
+			return nil
+		},
+	}
 
-            fmt.Fprint(cmd.OutOrStdout(), taskAsJSON)
+	command.Flags().VarP(&priorityFlag, PRIORITY, "p", "Decide the priority of a task")
 
-            return nil
-        },
-    }
+	command.RegisterFlagCompletionFunc(PRIORITY, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return task.AllowedProrities, cobra.ShellCompDirectiveDefault
+	})
 
-    command.Flags().StringP(PRIORITY, "p", "", "Decide the priority of a task")
-
-    command.RegisterFlagCompletionFunc(PRIORITY, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-        return task.AllowedProrities, cobra.ShellCompDirectiveDefault
-    })
-
-    return command
+	return command
 }
 
 func init() {
-    rootCmd.AddCommand(CreateAddCmd())
+	rootCmd.AddCommand(CreateAddCmd())
 }
