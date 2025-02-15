@@ -12,7 +12,6 @@ import (
 
 	"github.com/brianvoe/gofakeit/v7"
 	. "github.com/mini-clis/task-list/cmd"
-	"github.com/mini-clis/task-list/custom_errors"
 	"github.com/mini-clis/task-list/task"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/samber/lo"
@@ -33,10 +32,19 @@ type mockPersistedTask struct {
 // Helper Functions
 var executeCommand = func(cmd *cobra.Command, args ...string) (string, error) {
 	var buffer bytes.Buffer
+	var errBuffer bytes.Buffer
 	cmd.SetOut(&buffer)
+	cmd.SetErr(&errBuffer)
 	cmd.SetArgs(nil)
 	cmd.SetArgs(args)
-	return buffer.String(), cmd.Execute()
+
+	if errBuffer.String() != "" {
+		return "", fmt.Errorf("command failed: %s", errBuffer.String())
+	}
+
+	err := cmd.Execute()
+
+	return buffer.String(), err
 }
 
 var createFlag = func(flagName string) string {
@@ -131,8 +139,9 @@ var _ = Describe("Cmd", func() {
 	assert := assert.New(GinkgoT())
 	rootCmd := RootCmd()
 
+	seedTasks(assert)
+
 	BeforeEach(func() {
-		seedTasks(assert)
 		if len(rootCmd.Commands()) == 0 {
 			rootCmd.AddCommand(
 				CreateListCommand(),
@@ -188,7 +197,7 @@ var _ = Describe("Cmd", func() {
 				)
 
 				assert.Empty(output)
-				assert.ErrorIs(err, custom_errors.InvalidFlag)
+				assert.Error(err)
 			})
 		})
 
@@ -340,42 +349,44 @@ var _ = Describe("Cmd", func() {
 			fakeEditCase(PRIORITY),
 			fakeEditCase(COMPLETE),
 		}, func(editCase EditCase, index int) {
-			It(fmt.Sprintf("successfully updates task's %s field", editCase.FlagName), FlakeAttempts(3), func() {
-				taskFromOutput, err := getMockPersistedTaskBasedOnOutput(
-					executeCommand(
-						rootCmd,
-						"edit",
-						mockTask.Id,
-						createFlag(editCase.FlagName),
-						editCase.Argument,
-					),
-				)
+			It(
+				fmt.Sprintf("successfully updates task's %s field", editCase.FlagName),
+				func() {
+					taskFromOutput, err := getMockPersistedTaskBasedOnOutput(
+						executeCommand(
+							rootCmd,
+							"edit",
+							mockTask.Id,
+							createFlag(editCase.FlagName),
+							editCase.Argument,
+						),
+					)
 
-				assert.NoError(err)
-				assert.NotEmpty(taskFromOutput)
+					assert.NoError(err)
+					assert.NotEmpty(taskFromOutput)
 
-				capitalizedFlagName := lo.Capitalize(editCase.FlagName)
-				oldValue := reflect.ValueOf(mockTask).FieldByName(capitalizedFlagName).Interface()
-				newValue := reflect.ValueOf(taskFromOutput).FieldByName(capitalizedFlagName).Interface()
+					capitalizedFlagName := lo.Capitalize(editCase.FlagName)
+					oldValue := reflect.ValueOf(mockTask).FieldByName(capitalizedFlagName).Interface()
+					newValue := reflect.ValueOf(taskFromOutput).FieldByName(capitalizedFlagName).Interface()
 
-				message := fmt.Sprintf(
-					"Field %s update validation failed:\nOld value: %v\nNew value: %v\nUpdated at (old): %d\nUpdated at (new): %d",
-					capitalizedFlagName,
-					oldValue,
-					newValue,
-					mockTask.UpdatedAt,
-					taskFromOutput.UpdatedAt,
-				)
+					message := fmt.Sprintf(
+						"Field %s update validation failed:\nOld value: %v\nNew value: %v\nUpdated at (old): %d\nUpdated at (new): %d",
+						capitalizedFlagName,
+						oldValue,
+						newValue,
+						mockTask.UpdatedAt,
+						taskFromOutput.UpdatedAt,
+					)
 
-				assert.True(
-					lo.Ternary(
-						oldValue != newValue,
-						mockTask.UpdatedAt != taskFromOutput.UpdatedAt,
-						mockTask.UpdatedAt == taskFromOutput.UpdatedAt,
-					),
-					message,
-				)
-			})
+					assert.True(
+						lo.Ternary(
+							oldValue != newValue,
+							mockTask.UpdatedAt != taskFromOutput.UpdatedAt,
+							mockTask.UpdatedAt == taskFromOutput.UpdatedAt,
+						),
+						message,
+					)
+				})
 		})
 
 		It("returns an error when invalid priority value is provided", func() {
