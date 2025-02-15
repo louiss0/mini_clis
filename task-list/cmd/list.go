@@ -39,6 +39,102 @@ const FILTER_INCOMPLETE = "filter-incomplete"
 const SORT_DATE = "sort-date"
 const SORT_PRIORITY = "sort-priority"
 
+type filterPriorityFlag struct {
+	value string
+}
+
+func (self filterPriorityFlag) String() string {
+
+	return self.value
+}
+
+func (self *filterPriorityFlag) Set(value string) error {
+
+	priority, priorityErr := task.ParsePriority(value)
+
+	if priorityErr != nil {
+		return priorityErr
+	}
+
+	self.value = priority.Value()
+
+	return nil
+
+}
+
+func (self filterPriorityFlag) Type() string {
+	return "string"
+}
+
+type sortDateFlag struct {
+	value string
+}
+
+func (self sortDateFlag) String() string {
+
+	return self.value
+}
+
+func (self *sortDateFlag) Set(value string) error {
+
+	sortDateHasIncorrectValues := !lo.Contains(allowedDateSortValues, value)
+
+	if sortDateHasIncorrectValues {
+		return custom_errors.CreateInvalidFlagErrorWithMessage(
+			fmt.Sprintf(
+				"The only allowed value for sort-date are %s",
+				strings.Join(allowedDateSortValues, ","),
+			),
+		)
+	}
+
+	self.value = value
+	return nil
+
+}
+
+func (self sortDateFlag) Type() string {
+	return "string"
+}
+
+type sortPriorityFlag struct {
+	value string
+}
+
+func (self sortPriorityFlag) String() string {
+
+	return self.value
+}
+
+func (self *sortPriorityFlag) Set(value string) error {
+
+	sortPriorityHasIncorrectValues := !lo.Contains(allowedPrioritySortValues, value)
+
+	if sortPriorityHasIncorrectValues {
+
+		return custom_errors.CreateInvalidFlagErrorWithMessage(
+			fmt.Sprintf(
+				"The only allowed value for sort-priority are %s",
+				strings.Join(allowedPrioritySortValues, ","),
+			),
+		)
+
+	}
+
+	self.value = value
+
+	return nil
+
+}
+
+func (self sortPriorityFlag) Type() string {
+	return "string"
+}
+
+var _filterPriorityFlag filterPriorityFlag
+var _sortPriorityFlag sortPriorityFlag
+var _sortDateFlag sortDateFlag
+
 // listCmd represents the list command
 func CreateListCommand() *cobra.Command {
 
@@ -51,22 +147,14 @@ func CreateListCommand() *cobra.Command {
 		Args:         cobra.NoArgs,
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			filterPriority, filterPriorityErr := cmd.Flags().GetString(FILTER_PRIORITY)
 
 			filterComplete, filterCompleteError := cmd.Flags().GetBool(FILTER_COMPLETE)
 
 			filterIncomplete, filterIncompleteErr := cmd.Flags().GetBool(FILTER_INCOMPLETE)
 
-			sortDate, sortDateErr := cmd.Flags().GetString(SORT_DATE)
-
-			sortPriority, sortPriorityErr := cmd.Flags().GetString(SORT_PRIORITY)
-
 			flagError := errors.Join(
-				filterPriorityErr,
 				filterCompleteError,
 				filterIncompleteErr,
-				sortDateErr,
-				sortPriorityErr,
 			)
 
 			if flagError != nil {
@@ -79,45 +167,19 @@ func CreateListCommand() *cobra.Command {
 				return tasksErr
 			}
 
-			sortPriorityIsEmptyAndHasIncorrectValues :=
-				sortPriority != "" && !lo.Contains(allowedPrioritySortValues, sortPriority)
-
-			if sortPriorityIsEmptyAndHasIncorrectValues {
-
-				return custom_errors.CreateInvalidFlagErrorWithMessage(
-					fmt.Sprintf(
-						"The only allowed value for sort-priority are %s",
-						strings.Join(allowedPrioritySortValues, ","),
-					),
-				)
-
-			}
-
-			if sortPriority == HIGHEST {
+			if _sortPriorityFlag.String() == HIGHEST {
 				slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
 					return b.Priority.Order() - a.Priority.Order()
 				})
 			}
 
-			if sortPriority == LOWEST {
+			if _sortPriorityFlag.String() == LOWEST {
 				slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
 					return a.Priority.Order() - b.Priority.Order()
 				})
 			}
 
-			sortDateIsNotEmptyAndItHasIncorrectValues :=
-				sortDate != "" && !lo.Contains(allowedDateSortValues, sortDate)
-
-			if sortDateIsNotEmptyAndItHasIncorrectValues {
-				return custom_errors.CreateInvalidFlagErrorWithMessage(
-					fmt.Sprintf(
-						"The only allowed value for sort-date are %s",
-						strings.Join(allowedDateSortValues, ","),
-					),
-				)
-			}
-
-			if sortDate == LATEST {
+			if _sortDateFlag.String() == LATEST {
 				slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
 					if a.CreatedAt() > b.CreatedAt() {
 						return -1 // a should come before b (latest first)
@@ -129,7 +191,7 @@ func CreateListCommand() *cobra.Command {
 				})
 			}
 
-			if sortDate == EARLIEST {
+			if _sortDateFlag.String() == EARLIEST {
 				slices.SortFunc(tasks, func(a task.Task, b task.Task) int {
 					if a.CreatedAt() < b.CreatedAt() {
 						return -1 // a should come first (earliest first)
@@ -153,23 +215,15 @@ func CreateListCommand() *cobra.Command {
 				})
 			}
 
-			if filterPriority != "" {
-				priority, priorityErr := task.ParsePriority(filterPriority)
+			tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
+				return item.Priority.Value() == _filterPriorityFlag.String()
+			})
 
-				if priorityErr != nil {
-					return priorityErr
-				}
+			if len(tasks) == 0 {
 
-				tasks = lo.Filter(tasks, func(item task.Task, index int) bool {
-					return item.Priority == priority
-				})
+				fmt.Printf("There are no tasks with this priority %s", _filterPriorityFlag.String())
 
-				if len(tasks) == 0 {
-
-					fmt.Printf("There are no tasks with this priority %s", priority)
-
-					return nil
-				}
+				return nil
 			}
 
 			stringifiedTasks, stringifiedTasksErr := task.MarshallTasks(tasks)
@@ -198,7 +252,8 @@ func CreateListCommand() *cobra.Command {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 
-	listCmd.Flags().String(FILTER_PRIORITY, "", "Filter tasks by priority")
+	listCmd.Flags().Var(&_filterPriorityFlag, FILTER_PRIORITY, "Filter tasks by priority")
+
 	listCmd.RegisterFlagCompletionFunc(
 		FILTER_PRIORITY,
 		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -211,9 +266,9 @@ func CreateListCommand() *cobra.Command {
 
 	listCmd.MarkFlagsMutuallyExclusive(FILTER_COMPLETE, FILTER_INCOMPLETE)
 
-	listCmd.Flags().String(
+	listCmd.Flags().Var(
+		&_sortDateFlag,
 		SORT_DATE,
-		"",
 		fmt.Sprintf("Sort by  date %s", strings.Join(allowedDateSortValues, ",")),
 	)
 
@@ -224,11 +279,13 @@ func CreateListCommand() *cobra.Command {
 			return allowedDateSortValues, cobra.ShellCompDirectiveDefault
 		},
 	)
-	listCmd.Flags().String(
+
+	listCmd.Flags().Var(
+		&_sortPriorityFlag,
 		SORT_PRIORITY,
-		"",
-		fmt.Sprintf("Sort by  priority %s", strings.Join(allowedPrioritySortValues, ",")),
+		fmt.Sprintf("Sort by priority %s", strings.Join(allowedPrioritySortValues, ",")),
 	)
+
 	listCmd.RegisterFlagCompletionFunc(
 		SORT_PRIORITY,
 		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
