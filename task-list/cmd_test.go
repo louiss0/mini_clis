@@ -89,7 +89,7 @@ var getRandomPersistedTask = func(tasks []mockPersistedTask) (mockPersistedTask,
 	return tasks[randomIndex], nil
 }
 
-var seedTasks = func(assert *assert.Assertions) {
+var seedTasks = func() {
 	file, err := os.OpenFile(
 		task.TASK_LIST_STORAGE_PATH,
 		os.O_TRUNC|os.O_WRONLY,
@@ -125,21 +125,25 @@ var seedTasks = func(assert *assert.Assertions) {
 		})
 
 	data, err := json.Marshal(fakeTasks)
-	assert.NoError(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	if err := file.Truncate(0); err != nil {
-		assert.NoError(err)
+		log.Fatal(err)
 	}
 
 	_, err = file.Write(data)
-	assert.NoError(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 var _ = Describe("Cmd", func() {
 	assert := assert.New(GinkgoT())
 	rootCmd := RootCmd()
 
-	seedTasks(assert)
+	seedTasks()
 
 	BeforeEach(func() {
 		if len(rootCmd.Commands()) == 0 {
@@ -182,121 +186,123 @@ var _ = Describe("Cmd", func() {
 			assert.Greater(len(tasks), 0)
 		})
 
-		// Flag validation tests
-		lo.ForEach([]string{
-			FILTER_PRIORITY,
-			SORT_DATE,
-			SORT_PRIORITY,
-		}, func(item string, index int) {
-			It(fmt.Sprintf("returns an error when invalid value is provided for %s", item), func() {
-				output, err := executeCommand(
-					rootCmd,
-					"list",
-					createFlag(item),
-					"invalid-value",
-				)
+		Context("Flag validation", func() {
+			lo.ForEach([]string{
+				FILTER_PRIORITY,
+				SORT_DATE,
+				SORT_PRIORITY,
+			}, func(item string, index int) {
+				It(fmt.Sprintf("returns an error when invalid value is provided for %s", item), func() {
+					output, err := executeCommand(
+						rootCmd,
+						"list",
+						createFlag(item),
+						"invalid-value",
+					)
 
-				assert.Empty(output)
-				assert.Error(err)
+					assert.Empty(output)
+					assert.Error(err)
+				})
+			})
+
+			Context("Task Organization", func() {
+				It("sorts tasks by highest priority", func() {
+					tasks, err := extractPersistedTasksFromOutput(
+						executeCommand(rootCmd, "list", createFlag(SORT_PRIORITY), HIGHEST),
+					)
+
+					assert.NoError(err)
+					assert.Greater(len(tasks), 1)
+
+					priorityMap := map[string]int{
+						"high":   3,
+						"medium": 2,
+						"low":    1,
+					}
+
+					allTasksAreSortedByHighestOrder := lo.EveryBy(
+						lo.Chunk(tasks, 2),
+						func(item []mockPersistedTask) bool {
+							if len(item) < 2 {
+								return true
+							}
+
+							first, second := item[0], item[1]
+							return priorityMap[first.Priority] >= priorityMap[second.Priority]
+						})
+
+					assert.True(allTasksAreSortedByHighestOrder)
+				})
+
+				// Continue with sort and filter tests...
+				It("sorts tasks by lowest priority", func() {
+					tasks, err := extractPersistedTasksFromOutput(
+						executeCommand(rootCmd, "list", createFlag(SORT_PRIORITY), LOWEST),
+					)
+
+					assert.NoError(err)
+					assert.Greater(len(tasks), 1)
+
+					priorityMap := map[string]int{
+						"high":   3,
+						"medium": 2,
+						"low":    1,
+					}
+
+					allTasksAreSortedByLowestOrder := lo.EveryBy(
+						lo.Chunk(tasks, 2),
+						func(item []mockPersistedTask) bool {
+							if len(item) < 2 {
+								return true
+							}
+							return priorityMap[item[0].Priority] <= priorityMap[item[1].Priority]
+						})
+
+					assert.True(allTasksAreSortedByLowestOrder)
+				})
+
+				It("sorts tasks by most recent date", func() {
+					tasks, err := extractPersistedTasksFromOutput(
+						executeCommand(rootCmd, "list", createFlag(SORT_DATE), LATEST),
+					)
+
+					assert.NoError(err)
+					assert.Greater(len(tasks), 1)
+
+					tasksAreSortedByLatest := lo.EveryBy(
+						lo.Chunk(tasks, 2),
+						func(item []mockPersistedTask) bool {
+							if len(item) < 2 {
+								return true
+							}
+							return item[0].CreatedAt > item[1].CreatedAt
+						})
+
+					assert.True(tasksAreSortedByLatest)
+				})
+
+				It("sorts tasks by oldest date", func() {
+					tasks, err := extractPersistedTasksFromOutput(
+						executeCommand(rootCmd, "list", createFlag(SORT_DATE), EARLIEST),
+					)
+
+					assert.NoError(err)
+					assert.Greater(len(tasks), 1)
+
+					tasksAreSortedByEarliest := lo.EveryBy(
+						lo.Chunk(tasks, 2),
+						func(item []mockPersistedTask) bool {
+							if len(item) < 2 {
+								return true
+							}
+							return item[0].CreatedAt < item[1].CreatedAt
+						})
+
+					assert.True(tasksAreSortedByEarliest)
+				})
 			})
 		})
 
-		Context("Task Organization", func() {
-			It("sorts tasks by highest priority", func() {
-				tasks, err := extractPersistedTasksFromOutput(
-					executeCommand(rootCmd, "list", createFlag(SORT_PRIORITY), HIGHEST),
-				)
-
-				assert.NoError(err)
-				assert.Greater(len(tasks), 1)
-
-				priorityMap := map[string]int{
-					"high":   3,
-					"medium": 2,
-					"low":    1,
-				}
-
-				allTasksAreSortedByHighestOrder := lo.EveryBy(
-					lo.Chunk(tasks, 2),
-					func(item []mockPersistedTask) bool {
-						if len(item) < 2 {
-							return true
-						}
-
-						first, second := item[0], item[1]
-						return priorityMap[first.Priority] >= priorityMap[second.Priority]
-					})
-
-				assert.True(allTasksAreSortedByHighestOrder)
-			})
-
-			// Continue with sort and filter tests...
-			It("sorts tasks by lowest priority", func() {
-				tasks, err := extractPersistedTasksFromOutput(
-					executeCommand(rootCmd, "list", createFlag(SORT_PRIORITY), LOWEST),
-				)
-
-				assert.NoError(err)
-				assert.Greater(len(tasks), 1)
-
-				priorityMap := map[string]int{
-					"high":   3,
-					"medium": 2,
-					"low":    1,
-				}
-
-				allTasksAreSortedByLowestOrder := lo.EveryBy(
-					lo.Chunk(tasks, 2),
-					func(item []mockPersistedTask) bool {
-						if len(item) < 2 {
-							return true
-						}
-						return priorityMap[item[0].Priority] <= priorityMap[item[1].Priority]
-					})
-
-				assert.True(allTasksAreSortedByLowestOrder)
-			})
-
-			It("sorts tasks by most recent date", func() {
-				tasks, err := extractPersistedTasksFromOutput(
-					executeCommand(rootCmd, "list", createFlag(SORT_DATE), LATEST),
-				)
-
-				assert.NoError(err)
-				assert.Greater(len(tasks), 1)
-
-				tasksAreSortedByLatest := lo.EveryBy(
-					lo.Chunk(tasks, 2),
-					func(item []mockPersistedTask) bool {
-						if len(item) < 2 {
-							return true
-						}
-						return item[0].CreatedAt > item[1].CreatedAt
-					})
-
-				assert.True(tasksAreSortedByLatest)
-			})
-
-			It("sorts tasks by oldest date", func() {
-				tasks, err := extractPersistedTasksFromOutput(
-					executeCommand(rootCmd, "list", createFlag(SORT_DATE), EARLIEST),
-				)
-
-				assert.NoError(err)
-				assert.Greater(len(tasks), 1)
-
-				tasksAreSortedByEarliest := lo.EveryBy(
-					lo.Chunk(tasks, 2),
-					func(item []mockPersistedTask) bool {
-						if len(item) < 2 {
-							return true
-						}
-						return item[0].CreatedAt < item[1].CreatedAt
-					})
-
-				assert.True(tasksAreSortedByEarliest)
-			})
-		})
 	})
 
 	Context("Editing tasks", Ordered, func() {
@@ -512,7 +518,7 @@ var _ = Describe("Cmd", func() {
 		})
 	})
 
-	Context("Deleting tasks", Ordered, func() {
+	Context("Deleting tasks", func() {
 		oldPersistedTasks := []mockPersistedTask{}
 
 		assertTasksAreDeleted := func(oldTasks, newTasks []mockPersistedTask, contextMessage string) {
@@ -539,7 +545,7 @@ var _ = Describe("Cmd", func() {
 		})
 
 		AfterEach(func() {
-			seedTasks(assert)
+			seedTasks()
 		})
 
 		It("successfully deletes a task by ID", func() {
