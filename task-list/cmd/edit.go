@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/charmbracelet/huh"
 	"github.com/mini-clis/task-list/custom_errors"
 	"github.com/mini-clis/task-list/flags"
 	"github.com/mini-clis/task-list/task"
@@ -62,18 +63,74 @@ var CreateEditCmd = func() *cobra.Command {
 				)
 			}
 
-			if titleFlag.String() != "" && foundTask.Title != titleFlag.String() {
-				foundTask.Title = titleFlag.String()
+			title := titleFlag.String()
+			description := descriptionFlag.String()
+			priority := priorityFlag.String()
+			complete := completeFlag.String()
+
+			if lo.Every([]string{title, description, priority, complete}, []string{""}) {
+
+				title = foundTask.Title
+				description = foundTask.Description
+				priority = foundTask.Priority.Value()
+				internalComplete := foundTask.Complete
+
+				form := huh.NewForm(
+					huh.NewGroup(
+						huh.NewText().
+							Title("Title").
+							CharLimit(80).
+							Placeholder("What are you doing?").
+							Lines(1).
+							Value(&title).
+							Validate(huh.ValidateNotEmpty()),
+						huh.NewText().
+							Title("Description").
+							Value(&description).
+							CharLimit(80).
+							Lines(2).
+							Placeholder("Why are you doing this task?").
+							Validate(huh.ValidateNotEmpty()),
+						huh.NewSelect[string]().
+							Title("Priority").
+							Value(&priority).
+							Validate(huh.ValidateNotEmpty()).
+							Description("How important is this task").
+							Options(
+								huh.NewOption("Low", "low"),
+								huh.NewOption("Medium", "medium"),
+								huh.NewOption("High", "high"),
+							),
+						huh.NewConfirm().
+							Key("complete").
+							Value(&internalComplete).
+							Description("Is this task complete?").
+							Title("Complete").
+							Affirmative("Yes").
+							Negative("No"),
+					),
+				)
+
+				if err := form.Run(); err != nil {
+					return err
+				}
+
+				complete = fmt.Sprintf("%t", internalComplete)
+
+			}
+
+			if title != "" && foundTask.Title != title {
+				foundTask.Title = title
 				foundTask.UpdatedAt = time.Now()
 			}
 
-			if descriptionFlag.String() != "" && foundTask.Description != descriptionFlag.String() {
-				foundTask.Description = descriptionFlag.String()
+			if description != "" && foundTask.Description != description {
+				foundTask.Description = description
 				foundTask.UpdatedAt = time.Now()
 			}
 
-			if priorityFlag.String() != "" {
-				parsedPriority, err := task.ParsePriority(priorityFlag.String())
+			if priority != "" {
+				parsedPriority, err := task.ParsePriority(priority)
 
 				if err != nil {
 					return err
@@ -85,11 +142,17 @@ var CreateEditCmd = func() *cobra.Command {
 				}
 			}
 
-			if completeFlag.String() != "" {
+			if complete != "" {
 
-				if strconv.FormatBool(foundTask.Complete) != completeFlag.String() {
+				if strconv.FormatBool(foundTask.Complete) != complete {
 
-					foundTask.Complete = completeFlag.Value()
+					parsedComplete, err := strconv.ParseBool(complete)
+
+					if err != nil {
+						return err
+					}
+
+					foundTask.Complete = parsedComplete
 
 					foundTask.UpdatedAt = time.Now()
 				}

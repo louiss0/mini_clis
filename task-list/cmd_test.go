@@ -95,6 +95,7 @@ var seedTasks = func() {
 		os.O_TRUNC|os.O_WRONLY,
 		os.ModePerm,
 	)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -328,32 +329,22 @@ var _ = Describe("Cmd", func() {
 			Argument string
 		}
 
-		fakeEditCase := func(flagName string) EditCase {
-			return lo.Switch[string, EditCase](flagName).
-				Case(TITLE, EditCase{
-					TITLE,
-					gofakeit.Sentence(gofakeit.Number(1, 16)),
-				}).
-				Case(DESCRIPTION, EditCase{
-					DESCRIPTION,
-					gofakeit.Paragraph(1, gofakeit.Number(3, 11), gofakeit.Number(1, 16), " "),
-				}).
-				Case(PRIORITY, EditCase{
-					PRIORITY,
-					gofakeit.RandomString(task.AllowedProrities),
-				}).
-				Case(COMPLETE, EditCase{
-					COMPLETE,
-					gofakeit.RandomString([]string{"true", "false"}),
-				}).
-				Default(EditCase{})
-		}
-
 		lo.ForEach([]EditCase{
-			fakeEditCase(TITLE),
-			fakeEditCase(DESCRIPTION),
-			fakeEditCase(PRIORITY),
-			fakeEditCase(COMPLETE),
+			{FlagName: TITLE,
+				Argument: gofakeit.Sentence(gofakeit.Number(1, 16)),
+			},
+			{
+				FlagName: DESCRIPTION,
+				Argument: gofakeit.Paragraph(1, gofakeit.Number(3, 11), gofakeit.Number(1, 16), " "),
+			},
+			{
+				FlagName: PRIORITY,
+				Argument: gofakeit.RandomString(task.AllowedProrities),
+			},
+			{
+				FlagName: COMPLETE,
+				Argument: gofakeit.RandomString([]string{"true", "false"}),
+			},
 		}, func(editCase EditCase, index int) {
 			It(
 				fmt.Sprintf("successfully updates task's %s field", editCase.FlagName),

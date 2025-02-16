@@ -58,13 +58,11 @@ func ParsePriority(input string) (priority, error) {
 }
 
 type Task struct {
-	Title,
-	Description,
-	id string
-	createdAt int64
-	Priority  priority
-	Complete  bool
-	UpdatedAt time.Time
+	Title, Description, id string
+	createdAt              int64
+	Priority               priority
+	Complete               bool
+	UpdatedAt              time.Time
 }
 
 func NewTask(title, description string) Task {
