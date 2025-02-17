@@ -68,6 +68,14 @@ var CreateEditCmd = func() *cobra.Command {
 			priority := priorityFlag.String()
 			complete := completeFlag.String()
 
+			fmt.Printf(
+				"Title %s Description %s Priority %s Complete %s\n",
+				title,
+				description,
+				priority,
+				complete,
+			)
+
 			if lo.Every([]string{title, description, priority, complete}, []string{""}) {
 
 				title = foundTask.Title
@@ -166,13 +174,30 @@ var CreateEditCmd = func() *cobra.Command {
 				return err
 			}
 
-			taskAsJSON, err := foundTask.ToJSON()
+			fmt.Println("Here is the task")
+			plain, error := cmd.Flags().GetBool(PLAIN)
+
+			if error != nil {
+				return error
+			}
+
+			if plain {
+				taskAsJSON, err := foundTask.ToJSON()
+
+				if err != nil {
+					return err
+				}
+				fmt.Fprint(cmd.OutOrStdout(), taskAsJSON)
+
+				return nil
+			}
+
+			taskAsJSON, err := foundTask.ToPrettyJSON()
 
 			if err != nil {
 				return err
 			}
 
-			fmt.Printf("Here is the task %s\n", id)
 			fmt.Fprintln(
 				cmd.OutOrStdout(),
 				taskAsJSON,

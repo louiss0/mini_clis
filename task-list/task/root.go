@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mini-clis/task-list/custom_errors"
 	"github.com/samber/lo"
+	"github.com/tidwall/pretty"
 )
 
 type priority string
@@ -104,6 +105,21 @@ func (self Task) ToJSON() (string, error) {
 	})
 
 	return string(byte), error
+}
+
+func (task Task) ToPrettyJSON() (string, error) {
+
+	byte, error := json.MarshalIndent(persistedTask{
+		Id:          task.id,
+		Title:       task.Title,
+		Description: task.Description,
+		Priority:    task.Priority.Value(),
+		Complete:    task.Complete,
+		CreatedAt:   task.CreatedAt(),
+		UpdatedAt:   task.UpdatedAtTimeStamp(),
+	}, "", "  ")
+
+	return string(pretty.Color(pretty.Pretty(byte), nil)), error
 }
 
 type persistedTask struct {

@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const PLAIN = "plain"
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "task-list",
@@ -43,5 +45,9 @@ func init() {
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().Bool(
+		PLAIN,
+		false,
+		"This is for normal output",
+	)
 }

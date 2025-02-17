@@ -116,13 +116,33 @@ func CreateAddCmd() *cobra.Command {
 
 			fmt.Println("This is the task you added")
 
-			taskAsJSON, error := newTask.ToJSON()
+			plain, error := cmd.Flags().GetBool(PLAIN)
 
 			if error != nil {
 				return error
 			}
 
-			fmt.Fprint(cmd.OutOrStdout(), taskAsJSON)
+			if plain {
+				taskAsJSON, error := newTask.ToJSON()
+
+				if error != nil {
+					return error
+				}
+				fmt.Fprint(cmd.OutOrStdout(), taskAsJSON)
+
+				return nil
+			}
+
+			taskAsJSON, error := newTask.ToPrettyJSON()
+
+			if error != nil {
+				return error
+			}
+
+			fmt.Fprintln(
+				cmd.OutOrStdout(),
+				taskAsJSON,
+			)
 
 			return nil
 		},

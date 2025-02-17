@@ -13,6 +13,7 @@ import (
 	"github.com/mini-clis/task-list/task"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
+	"github.com/tidwall/pretty"
 )
 
 const LATEST = "latest"
@@ -143,11 +144,31 @@ func CreateListCommand() *cobra.Command {
 			}
 
 			fmt.Println("Here is the list of tasks you have to do")
-			fmt.Fprintln(
-				cmd.OutOrStdout(),
-				stringifiedTasks,
-			)
 
+			plain, error := cmd.Flags().GetBool(PLAIN)
+
+			if error != nil {
+				return error
+			}
+
+			if plain {
+				fmt.Fprintln(
+					cmd.OutOrStdout(),
+					stringifiedTasks,
+				)
+
+				return nil
+			}
+
+			fmt.Fprint(
+				cmd.OutOrStdout(),
+				string(
+					pretty.Color(
+						pretty.Pretty([]byte(stringifiedTasks)),
+						nil,
+					),
+				),
+			)
 			return nil
 
 		},
