@@ -68,14 +68,6 @@ var CreateEditCmd = func() *cobra.Command {
 			priority := priorityFlag.String()
 			complete := completeFlag.String()
 
-			fmt.Printf(
-				"Title %s Description %s Priority %s Complete %s\n",
-				title,
-				description,
-				priority,
-				complete,
-			)
-
 			everyFlagValueIsEmpty := lo.EveryBy(
 				[]string{title, description, priority, complete},
 				func(flagValue string) bool {
