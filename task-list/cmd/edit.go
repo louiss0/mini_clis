@@ -76,7 +76,14 @@ var CreateEditCmd = func() *cobra.Command {
 				complete,
 			)
 
-			if lo.Every([]string{title, description, priority, complete}, []string{""}) {
+			everyFlagValueIsEmpty := lo.EveryBy(
+				[]string{title, description, priority, complete},
+				func(flagValue string) bool {
+					return flagValue == ""
+				},
+			)
+
+			if everyFlagValueIsEmpty {
 
 				title = foundTask.Title
 				description = foundTask.Description

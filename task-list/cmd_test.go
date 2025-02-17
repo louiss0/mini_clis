@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"reflect"
+	"slices"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
@@ -36,7 +37,7 @@ var executeCommand = func(cmd *cobra.Command, args ...string) (string, error) {
 	cmd.SetOut(&buffer)
 	cmd.SetErr(&errBuffer)
 	cmd.SetArgs(nil)
-	cmd.SetArgs(args)
+	cmd.SetArgs(slices.Insert(args, 0, "--plain"))
 
 	if errBuffer.String() != "" {
 		return "", fmt.Errorf("command failed: %s", errBuffer.String())
@@ -330,7 +331,8 @@ var _ = Describe("Cmd", func() {
 		}
 
 		lo.ForEach([]EditCase{
-			{FlagName: TITLE,
+			{
+				FlagName: TITLE,
 				Argument: gofakeit.Sentence(gofakeit.Number(1, 16)),
 			},
 			{
