@@ -37,11 +37,17 @@ func CreateAddCmd() *cobra.Command {
 				return error
 			}
 
-			if len(args) == 0 && !ui {
-				return custom_errors.CreateInvalidArgumentErrorWithMessage(
-					"You must pass in the UI flag if you want to use the UI while passing no arguments",
+			if len(args) == 0 {
+
+				return lo.Ternary(
+					ui,
+					nil,
+					custom_errors.CreateInvalidArgumentErrorWithMessage(
+						"You must pass in the UI flag if you want to use the UI while passing no arguments",
+					),
 				)
 			}
+
 			return cobra.RangeArgs(1, 2)(cmd, args)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
