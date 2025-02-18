@@ -143,8 +143,6 @@ func CreateListCommand() *cobra.Command {
 				return stringifiedTasksErr
 			}
 
-			fmt.Println("Here is the list of tasks you have to do")
-
 			plain, error := cmd.Flags().GetBool(PLAIN)
 
 			if error != nil {

@@ -114,8 +114,6 @@ func CreateAddCmd() *cobra.Command {
 				return error
 			}
 
-			fmt.Println("This is the task you added")
-
 			plain, error := cmd.Flags().GetBool(PLAIN)
 
 			if error != nil {

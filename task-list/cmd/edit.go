@@ -173,7 +173,6 @@ var CreateEditCmd = func() *cobra.Command {
 				return err
 			}
 
-			fmt.Println("Here is the task")
 			plain, error := cmd.Flags().GetBool(PLAIN)
 
 			if error != nil {
