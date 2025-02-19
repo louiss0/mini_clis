@@ -1,9 +1,10 @@
-package main_test
+package main
 
 import (
 	"bytes"
 	"fmt"
 
+	"github.com/mini-clis/pass-gen/cmd"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,6 @@ func executeCommand(command *cobra.Command, args ...string) (output string, err 
 	command.SetOut(buf)
 	command.SetErr(errorBuf)
 	command.SetArgs(args)
-
 	err = command.Execute()
 
 	if errorBuf.Len() > 0 {
@@ -29,8 +29,33 @@ var _ = Describe("Cmd", func() {
 
 	assert := assert.New(GinkgoT())
 
-	It("should do something", func() {
-		assert.True(false)
+	var rootCmd = cmd.RootCmd()
+
+	BeforeEach(func() {
+
+		rootCmd.AddCommand(
+			cmd.CreateWordsCmd(),
+		)
+	})
+
+	AfterEach(func() {
+
+		rootCmd.ResetCommands()
+	})
+
+	// This test only works when a string is passed as an argument
+	It("should execute successfully", func() {
+		output, err := executeCommand(rootCmd, "")
+		assert.NoError(err)
+		assert.NotEmpty(output)
+	})
+
+	Context("Words", func() {
+		It("should execute successfully", func() {
+			output, err := executeCommand(rootCmd, "words")
+			assert.NoError(err)
+			assert.NotEmpty(output)
+		})
 	})
 
 })
