@@ -41,7 +41,7 @@ to quickly create a Cobra application.`,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			return printer.PrintUsingCommmand(cmd, "foo")
+			return printer.PrintUsingCommmand(cmd, "foo-bar-sep")
 		},
 	}
 
