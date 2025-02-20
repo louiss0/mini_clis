@@ -53,7 +53,7 @@ to quickly create a Cobra application.`,
 
 			allNumbers := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
 
-			keyboardSymbols := []string{"!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "+", "=", "{", "}", "[", "]", "|", ":", ";", ".", "/", "?"}
+			keyboardSymbols := []string{"!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "=", "{", "}", "[", "]", "|", ":", ";", ".", "?"}
 
 			numberToCharsMap := map[int][]string{
 				0: allLetters,
@@ -75,9 +75,9 @@ to quickly create a Cobra application.`,
 
 									randomNumberFromZeroToTwo := rand.Intn(len(numberToCharsMap))
 
-									randomIntFromCharSetlength := rand.Intn(len(numberToCharsMap[randomNumberFromZeroToTwo]))
+									randomIntFromCharSetLength := rand.Intn(len(numberToCharsMap[randomNumberFromZeroToTwo]))
 
-									return numberToCharsMap[randomNumberFromZeroToTwo][randomIntFromCharSetlength]
+									return numberToCharsMap[randomNumberFromZeroToTwo][randomIntFromCharSetLength]
 								}),
 							"")
 
