@@ -56,6 +56,13 @@ var _ = Describe("Cmd", func() {
 			assert.NoError(err)
 			assert.NotEmpty(output)
 		})
+
+		It("generates three words by default separated by dashes", func() {
+			output, err := executeCommand(rootCmd, "words")
+			assert.NoError(err)
+			assert.NotEmpty(output)
+		})
+
 	})
 
 })
