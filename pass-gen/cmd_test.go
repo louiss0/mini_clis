@@ -3,9 +3,11 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/mini-clis/pass-gen/cmd"
 	. "github.com/onsi/ginkgo/v2"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )
@@ -61,6 +63,18 @@ var _ = Describe("Cmd", func() {
 			output, err := executeCommand(rootCmd, "words")
 			assert.NoError(err)
 			assert.NotEmpty(output)
+		})
+
+		It("generates words with a length of 5", func() {
+			output, err := executeCommand(rootCmd, "words")
+			assert.NoError(err)
+
+			allWordsAreTheLengthOfFive := lo.EveryBy(
+				strings.Split(output, "-"),
+				func(word string) bool {
+					return len(word) == 5
+				})
+			assert.True(allWordsAreTheLengthOfFive)
 		})
 
 	})
