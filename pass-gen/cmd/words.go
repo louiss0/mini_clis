@@ -22,7 +22,12 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"strings"
+
+	"math/rand"
+
 	"github.com/mini-clis/pass-gen/printer"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )
 
@@ -40,8 +45,46 @@ to quickly create a Cobra application.`,
 		Args: cobra.NoArgs,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
+			amountOfWords := 3
 
-			return printer.PrintUsingCommmand(cmd, "foo-bar-sep")
+			wordLength := 5
+
+			allLetters := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
+
+			allNumbers := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+
+			keyboardSymbols := []string{"!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "+", "=", "{", "}", "[", "]", "|", ":", ";", ".", "/", "?"}
+
+			numberToCharsMap := map[int][]string{
+				0: allLetters,
+				1: allNumbers,
+				2: keyboardSymbols,
+				3: lo.Map(allLetters, func(item string, index int) string {
+					return strings.ToUpper(item)
+				}),
+			}
+
+			values :=
+				lo.Map(
+					lo.Range(amountOfWords),
+					func(item int, index int) string {
+
+						return strings.Join(
+							lo.Map(lo.Range(wordLength),
+								func(item int, index int) string {
+
+									randomNumberFromZeroToTwo := rand.Intn(len(numberToCharsMap))
+
+									randomIntFromCharSetlength := rand.Intn(len(numberToCharsMap[randomNumberFromZeroToTwo]) + 1)
+
+									return numberToCharsMap[randomNumberFromZeroToTwo][randomIntFromCharSetlength]
+								}),
+							"")
+
+					},
+				)
+
+			return printer.PrintUsingCommmand(cmd, strings.Join(values, "-"))
 		},
 	}
 
