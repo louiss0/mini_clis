@@ -75,7 +75,7 @@ to quickly create a Cobra application.`,
 
 									randomNumberFromZeroToTwo := rand.Intn(len(numberToCharsMap))
 
-									randomIntFromCharSetlength := rand.Intn(len(numberToCharsMap[randomNumberFromZeroToTwo]) + 1)
+									randomIntFromCharSetlength := rand.Intn(len(numberToCharsMap[randomNumberFromZeroToTwo]))
 
 									return numberToCharsMap[randomNumberFromZeroToTwo][randomIntFromCharSetlength]
 								}),
