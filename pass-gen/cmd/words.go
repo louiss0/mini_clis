@@ -50,7 +50,9 @@ to quickly create a Cobra application.`,
 
 			wordLength, lengthFlagError := cmd.Flags().GetInt("length")
 
-			flagErrors := errors.Join(lengthFlagError, countFlagError)
+			separator, sepFlagError := cmd.Flags().GetString("separator")
+
+			flagErrors := errors.Join(lengthFlagError, countFlagError, sepFlagError)
 
 			if flagErrors != nil {
 				return flagErrors
@@ -106,12 +108,13 @@ to quickly create a Cobra application.`,
 					},
 				)
 
-			return printer.PrintUsingCommmand(cmd, strings.Join(values, "-"))
+			return printer.PrintUsingCommmand(cmd, strings.Join(values, separator))
 		},
 	}
 
 	wordsCmd.Flags().Int("count", 3, "How many words are created ")
 	wordsCmd.Flags().Int("length", 5, "How many characters are in each word")
+	wordsCmd.Flags().String("separator", "-", "The separator to use between words")
 
 	return wordsCmd
 }
