@@ -66,7 +66,7 @@ var _ = Describe("Cmd", func() {
 			assert.NotEmpty(output)
 		})
 
-		It("generates words with a length of 5", Focus, func() {
+		It("generates words with a length of 5", func() {
 			output, err := executeCommand(rootCmd, "words")
 			assert.NoError(err)
 
@@ -83,12 +83,24 @@ var _ = Describe("Cmd", func() {
 			output, err := executeCommand(rootCmd, "words", "--count", "5")
 			assert.NoError(err)
 			assert.NotEmpty(output)
+
+			thereAreFiveWords := len(strings.Split(output, "-")) == 5
+			assert.True(thereAreFiveWords)
+
 		})
 
 		It("allows the user to specify the length of words using the length flag", func() {
-			output, err := executeCommand(rootCmd, "words", "--count", "5", "--length", "3")
+			output, err := executeCommand(rootCmd, "words", "--length", "3")
 			assert.NoError(err)
 			assert.NotEmpty(output)
+
+			allWordsAreTheLengthOfThree := lo.EveryBy(
+				strings.Split(output, "-"),
+				func(word string) bool {
+
+					return utf8.RuneCountInString(word) == 3
+				})
+			assert.True(allWordsAreTheLengthOfThree)
 		})
 
 	})
