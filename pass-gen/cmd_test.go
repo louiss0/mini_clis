@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/mini-clis/pass-gen/cmd"
 	. "github.com/onsi/ginkgo/v2"
@@ -65,14 +66,15 @@ var _ = Describe("Cmd", func() {
 			assert.NotEmpty(output)
 		})
 
-		It("generates words with a length of 5", func() {
+		It("generates words with a length of 5", Focus, func() {
 			output, err := executeCommand(rootCmd, "words")
 			assert.NoError(err)
 
 			allWordsAreTheLengthOfFive := lo.EveryBy(
 				strings.Split(output, "-"),
 				func(word string) bool {
-					return len(word) == 5
+
+					return utf8.RuneCountInString(word) == 5
 				})
 			assert.True(allWordsAreTheLengthOfFive)
 		})
