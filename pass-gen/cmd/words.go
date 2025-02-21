@@ -23,12 +23,11 @@ package cmd
 
 import (
 	"errors"
+	"math/rand"
 	"strings"
 
-	"math/rand"
-
 	"github.com/mini-clis/pass-gen/printer"
-	"github.com/mini-clis/task-list/custom_errors"
+	"github.com/mini-clis/shared/custom_errors"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )
@@ -59,18 +58,18 @@ to quickly create a Cobra application.`,
 			}
 
 			if wordLength <= 0 {
-				return custom_errors.CreateInvalidFlagErrorWithMessage("word length must be greater than 0")
+				return custom_errors.CreateInvalidFlagErrorWithMessage(custom_errors.FlagName("count"), "word length must be greater than 0")
 			}
 
 			if amountOfWords <= 0 {
-				return custom_errors.CreateInvalidFlagErrorWithMessage("amount of words must be greater than 0")
+				return custom_errors.CreateInvalidFlagErrorWithMessage(custom_errors.FlagName("length"), "amount of words must be greater than 0")
 			}
 
 			allLetters := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
 
 			allNumbers := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
 
-			keyboardSymbols := []string{"!", "#", "$", "%", "^", "&", ",", ":", ".", "~", "@", "_", "-", "|", "<", ">", "?", "*", ";", "[", "]"}
+			keyboardSymbols := []string{"!", "#", "$", "%", "^", "&", ",", ":", ".", "~", "@", "|", "<", ">", "?", "*", ";", "[", "]"}
 
 			allLettersCapitalized := lo.Map(
 				allLetters,
