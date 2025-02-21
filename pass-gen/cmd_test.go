@@ -79,6 +79,18 @@ var _ = Describe("Cmd", func() {
 			assert.True(allWordsAreTheLengthOfFive)
 		})
 
+		It("allows the user to specify the number of words using the count flag", func() {
+			output, err := executeCommand(rootCmd, "words", "--count", "5")
+			assert.NoError(err)
+			assert.NotEmpty(output)
+		})
+
+		It("allows the user to specify the length of words using the length flag", func() {
+			output, err := executeCommand(rootCmd, "words", "--count", "5", "--length", "3")
+			assert.NoError(err)
+			assert.NotEmpty(output)
+		})
+
 	})
 
 })
