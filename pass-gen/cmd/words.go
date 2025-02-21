@@ -53,31 +53,37 @@ to quickly create a Cobra application.`,
 
 			allNumbers := []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
 
-			keyboardSymbols := []string{"!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "=", "{", "}", "[", "]", "|", ":", ";", ".", "?"}
+			keyboardSymbols := []string{"!", "#", "$", "%", "^", "&", ",", ":", ".", "~", "@", "_", "-", "|", "<", ">", "?", "*", ";", "[", "]"}
+
+			allLettersCapitalized := lo.Map(
+				allLetters,
+				func(item string, index int) string {
+					return strings.ToUpper(item)
+				})
 
 			numberToCharsMap := map[int][]string{
 				0: allLetters,
 				1: allNumbers,
 				2: keyboardSymbols,
-				3: lo.Map(allLetters, func(item string, index int) string {
-					return strings.ToUpper(item)
-				}),
+				3: allLettersCapitalized,
 			}
 
 			values :=
 				lo.Map(
 					lo.Range(amountOfWords),
-					func(item int, index int) string {
+					func(outerItem int, index int) string {
 
 						return strings.Join(
 							lo.Map(lo.Range(wordLength),
-								func(item int, index int) string {
+								func(innerItem int, index int) string {
 
 									randomNumberFromZeroToTwo := rand.Intn(len(numberToCharsMap))
 
-									randomIntFromCharSetLength := rand.Intn(len(numberToCharsMap[randomNumberFromZeroToTwo]))
+									charSet := numberToCharsMap[randomNumberFromZeroToTwo]
 
-									return numberToCharsMap[randomNumberFromZeroToTwo][randomIntFromCharSetLength]
+									randomIntFromCharSetLength := rand.Intn(len(charSet))
+
+									return charSet[randomIntFromCharSetLength]
 								}),
 							"")
 
