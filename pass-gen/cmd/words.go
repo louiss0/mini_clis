@@ -22,11 +22,13 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"errors"
 	"strings"
 
 	"math/rand"
 
 	"github.com/mini-clis/pass-gen/printer"
+	"github.com/mini-clis/task-list/custom_errors"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )
@@ -45,9 +47,24 @@ to quickly create a Cobra application.`,
 		Args: cobra.NoArgs,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			amountOfWords := 3
+			amountOfWords, countFlagError := cmd.Flags().GetInt("count")
 
-			wordLength := 5
+			wordLength, lengthFlagError := cmd.Flags().GetInt("length")
+
+			flagErrors := errors.Join(lengthFlagError, countFlagError)
+
+			if flagErrors != nil {
+				return flagErrors
+
+			}
+
+			if wordLength <= 0 {
+				return custom_errors.CreateInvalidFlagErrorWithMessage("word length must be greater than 0")
+			}
+
+			if amountOfWords <= 0 {
+				return custom_errors.CreateInvalidFlagErrorWithMessage("amount of words must be greater than 0")
+			}
 
 			allLetters := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
 
@@ -93,6 +110,9 @@ to quickly create a Cobra application.`,
 			return printer.PrintUsingCommmand(cmd, strings.Join(values, "-"))
 		},
 	}
+
+	wordsCmd.Flags().Int("count", 3, "How many words are created ")
+	wordsCmd.Flags().Int("length", 5, "How many characters are in each word")
 
 	return wordsCmd
 }
