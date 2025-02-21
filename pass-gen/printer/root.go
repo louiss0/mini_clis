@@ -8,7 +8,7 @@ import (
 
 func PrintUsingCommmand(cmd *cobra.Command, string string) error {
 
-	_, err := fmt.Fprintln(cmd.OutOrStdout(), string)
+	_, err := fmt.Fprint(cmd.OutOrStdout(), string)
 
 	return err
 }
