@@ -103,6 +103,29 @@ var _ = Describe("Cmd", func() {
 			assert.True(allWordsAreTheLengthOfThree)
 		})
 
+		Context("Proper Separators", func() {
+
+			allowedSeparators := []string{"-", "_", "=", ":"}
+
+			lo.ForEach(allowedSeparators, func(separator string, index int) {
+				It("allows the user to specify the separator using the sep flag", func() {
+					output, err := executeCommand(
+						rootCmd,
+						"words",
+						"--separator",
+						separator,
+					)
+					assert.NoError(err)
+					assert.NotEmpty(output)
+
+					allWordsAreSeparatedBySeperator := strings.Contains(output, separator)
+					assert.True(allWordsAreSeparatedBySeperator)
+				})
+
+			})
+
+		})
+
 	})
 
 })
