@@ -38,6 +38,7 @@ var _ = Describe("Cmd", func() {
 
 		rootCmd.AddCommand(
 			cmd.CreateWordsCmd(),
+			cmd.CreateLeetspeakCmd(),
 		)
 	})
 
@@ -130,10 +131,72 @@ var _ = Describe("Cmd", func() {
 
 	Context("Leet Speak", func() {
 
+		leetSpeakLetterMap := map[rune][]string{
+			'a': []string{"4", "@", "^", "/\\", "4"},
+			'b': []string{"8", "|3", "ß", "13"},
+			'c': []string{"(", "{", "[", "©"},
+			'd': []string{"|)", "[)", "Ð", "6"},
+			'e': []string{"3", "&", "€", "13"},
+			'f': []string{"|=", "ƒ", "ph"},
+			'g': []string{"6", "9", "&", "5"},
+			'h': []string{"#", "[-]", "|-|", "4"},
+			'i': []string{"1", "!", "|", "L"},
+			'j': []string{"_|", "_/", "J"},
+			'k': []string{"|<", "|{", "X", "K"},
+			'l': []string{"1", "|", "I"},
+			'm': []string{"|V|", "/\\/\\", "[V]", "M"},
+			'n': []string{"^/", "/\\/", "Ñ", "n"},
+			'o': []string{"0", "()", "[]", "<>", "O"},
+			'p': []string{"|>", "9", "Þ", "P"},
+			'q': []string{"9", "O_", "(,)", "Q"},
+			'r': []string{"|2", "®", "/2", "R"},
+			's': []string{"5", "$", "z", "§", "S"},
+			't': []string{"7", "+", "†", "T"},
+			'u': []string{"|_|", "[_]", "\\_/", "U"},
+			'v': []string{"\\/", "√", "V", "V"},
+			'w': []string{"\\/\\/", "VV", "µ", "W"},
+			'x': []string{"%", "><", "*", "×"},
+			'y': []string{"`/", "¥", "Y"},
+			'z': []string{"2", "%", "7_", "Z"},
+		}
+
+		// leetSpeakNumberMap := map[rune][]string{
+		// 	'0': []string{"O", "o"},
+		// 	'1': []string{"I", "l", "!", "L"},
+		// 	'2': []string{"Z", "z"},
+		// 	'3': []string{"E", "e"},
+		// 	'4': []string{"A", "a"},
+		// 	'5': []string{"S", "s"},
+		// 	'6': []string{"G", "g"},
+		// 	'7': []string{"T", "t"},
+		// 	'8': []string{"B", "b"},
+		// 	'9': []string{"P", "p"},
+		// }
+
 		It("generates a leet speak password", func() {
-			output, err := executeCommand(rootCmd, "leetspeak", "8")
+			const word = "hello"
+			output, err := executeCommand(rootCmd, "leetspeak", word)
+
+			splitWord := strings.Split(word, "")
+
+			possibleValues := lo.Reduce(
+				splitWord,
+				func(agg []string, item string, index int) []string {
+					return append(agg, leetSpeakLetterMap[[]rune(item)[0]]...)
+				},
+				[]string{},
+			)
+
 			assert.NoError(err)
 			assert.NotEmpty(output)
+
+			allPossibleValuesAreInSplitWord := lo.Every(
+				possibleValues,
+				strings.Split(output, ""),
+			)
+
+			assert.True(allPossibleValuesAreInSplitWord)
+
 		})
 
 	})
