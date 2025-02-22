@@ -131,8 +131,8 @@ var _ = Describe("Cmd", func() {
 
 	Context("One Time", func() {
 
-		It("generates a one time password using a secret key", func() {
-			output, err := executeCommand(rootCmd, "otp", "boom")
+		It("generates a one time password using a length", func() {
+			output, err := executeCommand(rootCmd, "otp", "8")
 			assert.NoError(err)
 			assert.NotEmpty(output)
 
