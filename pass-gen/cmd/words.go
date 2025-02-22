@@ -22,8 +22,9 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"errors"
+	"fmt"
 	"math/rand"
+	"strconv"
 	"strings"
 
 	"github.com/mini-clis/pass-gen/printer"
@@ -32,8 +33,85 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type SeparatorFlag struct {
+	value    string
+	flagName string
+}
+
+func (self SeparatorFlag) String() string {
+	return self.value
+}
+
+func (self *SeparatorFlag) Set(value string) error {
+	allowedSeparators := []string{"-", "_", "=", ":"}
+
+	if !lo.Contains(allowedSeparators, value) {
+		return custom_errors.CreateInvalidFlagErrorWithMessage(
+			custom_errors.FlagName(self.flagName),
+			fmt.Sprintf("must be one of %v", allowedSeparators),
+		)
+	}
+
+	self.value = value
+	return nil
+}
+
+func (self SeparatorFlag) Type() string {
+	return "string"
+}
+
+type ZeroCheckFlag struct {
+	value    int
+	flagName string
+}
+
+func (self *ZeroCheckFlag) Set(value string) error {
+
+	int, err := strconv.Atoi(value)
+
+	if err != nil {
+		return err
+	}
+
+	if int <= 0 {
+		return custom_errors.CreateInvalidFlagErrorWithMessage(custom_errors.FlagName("count"), "word length must be greater than 0")
+	}
+
+	self.value = int
+	return nil
+
+}
+
+func (self ZeroCheckFlag) Value() int {
+	return self.value
+}
+
+func (self ZeroCheckFlag) String() string {
+	return fmt.Sprintf("%v", self.value)
+}
+
+func (self ZeroCheckFlag) Type() string {
+	return "number"
+}
+
 // wordsCmd represents the words command
 func CreateWordsCmd() *cobra.Command {
+
+	amountOfWordsFlag := ZeroCheckFlag{
+		value:    3,
+		flagName: "count",
+	}
+
+	wordLengthFlag := ZeroCheckFlag{
+		value:    5,
+		flagName: "word-length",
+	}
+
+	separatorFlag := SeparatorFlag{
+		value:    "-",
+		flagName: "separator",
+	}
+
 	var wordsCmd = &cobra.Command{
 		Use:   "words",
 		Short: "A brief description of your command",
@@ -45,27 +123,7 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 		Args: cobra.NoArgs,
 
-		RunE: func(cmd *cobra.Command, args []string) error {
-			amountOfWords, countFlagError := cmd.Flags().GetInt("count")
-
-			wordLength, lengthFlagError := cmd.Flags().GetInt("length")
-
-			separator, sepFlagError := cmd.Flags().GetString("separator")
-
-			flagErrors := errors.Join(lengthFlagError, countFlagError, sepFlagError)
-
-			if flagErrors != nil {
-				return flagErrors
-
-			}
-
-			if wordLength <= 0 {
-				return custom_errors.CreateInvalidFlagErrorWithMessage(custom_errors.FlagName("count"), "word length must be greater than 0")
-			}
-
-			if amountOfWords <= 0 {
-				return custom_errors.CreateInvalidFlagErrorWithMessage(custom_errors.FlagName("length"), "amount of words must be greater than 0")
-			}
+		Run: func(cmd *cobra.Command, args []string) {
 
 			allLetters := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
 
@@ -88,11 +146,11 @@ to quickly create a Cobra application.`,
 
 			values :=
 				lo.Map(
-					lo.Range(amountOfWords),
+					lo.Range(amountOfWordsFlag.Value()),
 					func(outerItem int, index int) string {
 
 						return strings.Join(
-							lo.Map(lo.Range(wordLength),
+							lo.Map(lo.Range(wordLengthFlag.Value()),
 								func(innerItem int, index int) string {
 
 									randomNumberFromZeroToTwo := rand.Intn(len(numberToCharsMap))
@@ -108,13 +166,13 @@ to quickly create a Cobra application.`,
 					},
 				)
 
-			return printer.PrintUsingCommmand(cmd, strings.Join(values, separator))
+			printer.PrintUsingCommmand(cmd, strings.Join(values, separatorFlag.String()))
 		},
 	}
 
-	wordsCmd.Flags().Int("count", 3, "How many words are created ")
-	wordsCmd.Flags().Int("length", 5, "How many characters are in each word")
-	wordsCmd.Flags().String("separator", "-", "The separator to use between words")
+	wordsCmd.Flags().Var(&amountOfWordsFlag, "count", "How many words are created ")
+	wordsCmd.Flags().Var(&wordLengthFlag, "length", "How many characters are in each word")
+	wordsCmd.Flags().Var(&separatorFlag, "separator", "The separator to use between words")
 
 	return wordsCmd
 }
