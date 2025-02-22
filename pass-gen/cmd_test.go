@@ -38,7 +38,6 @@ var _ = Describe("Cmd", func() {
 
 		rootCmd.AddCommand(
 			cmd.CreateWordsCmd(),
-			cmd.NewOTPCmd(),
 		)
 	})
 
@@ -129,15 +128,12 @@ var _ = Describe("Cmd", func() {
 
 	})
 
-	Context("One Time", func() {
+	Context("Leet Speak", func() {
 
-		It("generates a one time password using a length", func() {
-			output, err := executeCommand(rootCmd, "otp", "8")
+		It("generates a leet speak password", func() {
+			output, err := executeCommand(rootCmd, "leetspeak", "8")
 			assert.NoError(err)
 			assert.NotEmpty(output)
-
-			fmt.Println(output)
-
 		})
 
 	})
