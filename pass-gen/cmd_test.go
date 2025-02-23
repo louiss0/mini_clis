@@ -132,70 +132,73 @@ var _ = Describe("Cmd", func() {
 	Context("Leet Speak", func() {
 
 		leetSpeakLetterMap := map[rune][]string{
-			'a': []string{"4", "@", "^", "/\\", "4"},
-			'b': []string{"8", "|3", "ß", "13"},
-			'c': []string{"(", "{", "[", "©"},
-			'd': []string{"|)", "[)", "Ð", "6"},
-			'e': []string{"3", "&", "€", "13"},
-			'f': []string{"|=", "ƒ", "ph"},
-			'g': []string{"6", "9", "&", "5"},
-			'h': []string{"#", "[-]", "|-|", "4"},
-			'i': []string{"1", "!", "|", "L"},
-			'j': []string{"_|", "_/", "J"},
-			'k': []string{"|<", "|{", "X", "K"},
-			'l': []string{"1", "|", "I"},
-			'm': []string{"|V|", "/\\/\\", "[V]", "M"},
-			'n': []string{"^/", "/\\/", "Ñ", "n"},
-			'o': []string{"0", "()", "[]", "<>", "O"},
-			'p': []string{"|>", "9", "Þ", "P"},
-			'q': []string{"9", "O_", "(,)", "Q"},
-			'r': []string{"|2", "®", "/2", "R"},
-			's': []string{"5", "$", "z", "§", "S"},
-			't': []string{"7", "+", "†", "T"},
-			'u': []string{"|_|", "[_]", "\\_/", "U"},
-			'v': []string{"\\/", "√", "V", "V"},
-			'w': []string{"\\/\\/", "VV", "µ", "W"},
-			'x': []string{"%", "><", "*", "×"},
-			'y': []string{"`/", "¥", "Y"},
-			'z': []string{"2", "%", "7_", "Z"},
+			'a': {"4", "@", "^", "/\\", "4"},
+			'b': {"8", "|3", "ß", "13"},
+			'c': {"(", "{", "[", "©"},
+			'd': {"|)", "[)", "Ð", "6"},
+			'e': {"3", "&", "€", "13"},
+			'f': {"|=", "ƒ", "ph"},
+			'g': {"6", "9", "&", "5"},
+			'h': {"#", "[-]", "|-|", "4"},
+			'i': {"1", "!", "|", "L"},
+			'j': {"_|", "_/", "J"},
+			'k': {"|<", "|{", "X", "K"},
+			'l': {"1", "|", "I"},
+			'm': {"|V|", "/\\/\\", "[V]", "M"},
+			'n': {"^/", "/\\/", "Ñ", "n"},
+			'o': {"0", "()", "[]", "<>", "O"},
+			'p': {"|>", "9", "Þ", "P"},
+			'q': {"9", "O_", "(,)", "Q"},
+			'r': {"|2", "®", "/2", "R"},
+			's': {"5", "$", "z", "§", "S"},
+			't': {"7", "+", "†", "T"},
+			'u': {"|_|", "[_]", "\\_/", "U"},
+			'v': {"\\/", "√", "V", "V"},
+			'w': {"\\/\\/", "VV", "µ", "W"},
+			'x': {"%", "><", "*", "×"},
+			'y': {"`/", "¥", "Y"},
+			'z': {"2", "%", "7_", "Z"},
 		}
 
-		// leetSpeakNumberMap := map[rune][]string{
-		// 	'0': []string{"O", "o"},
-		// 	'1': []string{"I", "l", "!", "L"},
-		// 	'2': []string{"Z", "z"},
-		// 	'3': []string{"E", "e"},
-		// 	'4': []string{"A", "a"},
-		// 	'5': []string{"S", "s"},
-		// 	'6': []string{"G", "g"},
-		// 	'7': []string{"T", "t"},
-		// 	'8': []string{"B", "b"},
-		// 	'9': []string{"P", "p"},
+		// leetSpeakNumberMap := map[rune]{
+		// 	'0': {"O", "o"},
+		// 	'1': {"I", "l", "!", "L"},
+		// 	'2': {"Z", "z"},
+		// 	'3': {"E", "e"},
+		// 	'4': {"A", "a"},
+		// 	'5': {"S", "s"},
+		// 	'6': {"G", "g"},
+		// 	'7': {"T", "t"},
+		// 	'8': {"B", "b"},
+		// 	'9': {"P", "p"},
 		// }
 
 		It("generates a leet speak password", func() {
 			const word = "hello"
-			output, err := executeCommand(rootCmd, "leetspeak", word)
 
 			splitWord := strings.Split(word, "")
 
-			possibleValues := lo.Reduce(
-				splitWord,
-				func(agg []string, item string, index int) []string {
-					return append(agg, leetSpeakLetterMap[[]rune(item)[0]]...)
-				},
-				[]string{},
-			)
+			output, err := executeCommand(rootCmd, "leetspeak", word)
 
 			assert.NoError(err)
 			assert.NotEmpty(output)
 
-			allPossibleValuesAreInSplitWord := lo.Every(
-				possibleValues,
-				strings.Split(output, ""),
-			)
+			everyCharacterIsALeetSpeakVersion := lo.EveryBy(
+				splitWord,
+				func(character string) bool {
 
-			assert.True(allPossibleValuesAreInSplitWord)
+					symbolsForCharacter := leetSpeakLetterMap[rune(character[0])]
+
+					return lo.SomeBy(
+						symbolsForCharacter,
+						func(symbol string) bool {
+							return strings.Contains(output, symbol)
+						},
+					)
+
+				})
+
+			assert.True(everyCharacterIsALeetSpeakVersion)
 
 		})
 
