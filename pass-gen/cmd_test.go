@@ -302,6 +302,15 @@ var _ = Describe("Cmd", func() {
 
 		})
 
+		It("makes sure that only numbers and letters can be input", func() {
+			const word = "!@#$%^&*()_+"
+			output, err := executeCommand(rootCmd, "leetspeak", word)
+
+			assert.Error(err)
+			assert.Empty(output)
+
+		})
+
 	})
 
 })
