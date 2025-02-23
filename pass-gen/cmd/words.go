@@ -104,7 +104,7 @@ func CreateWordsCmd() *cobra.Command {
 
 	wordLengthFlag := ZeroCheckFlag{
 		value:    5,
-		flagName: "word-length",
+		flagName: "length",
 	}
 
 	separatorFlag := SeparatorFlag{
@@ -114,15 +114,16 @@ func CreateWordsCmd() *cobra.Command {
 
 	var wordsCmd = &cobra.Command{
 		Use:   "words",
-		Short: "A brief description of your command",
-		Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+		Short: "Generate random words",
+		Long: `Generate random words. This command generates a specified number of random words, each with a specified length, separated by a specified separator.
+		The words can be generated with different character sets, such as letters, numbers, and symbols.
+		The default amount of words is 3. The default word length is 5.
+		The default separator is "-".
+		You can specify a custom separator using the --separator flag.
+		You can specify a custom length using the --length flag.
+		You can specify how many words using the --count flag.
+		`,
 		Args: cobra.NoArgs,
-
 		Run: func(cmd *cobra.Command, args []string) {
 
 			allLetters := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
