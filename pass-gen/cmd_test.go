@@ -161,18 +161,18 @@ var _ = Describe("Cmd", func() {
 			'z': {"2", "%", "7_", "Z"},
 		}
 
-		// leetSpeakNumberMap := map[rune][]string{
-		// 	'0': {"O", "o"},
-		// 	'1': {"I", "l", "!", "L"},
-		// 	'2': {"Z", "z"},
-		// 	'3': {"E", "e"},
-		// 	'4': {"A", "a"},
-		// 	'5': {"S", "s"},
-		// 	'6': {"G", "g"},
-		// 	'7': {"T", "t"},
-		// 	'8': {"B", "b"},
-		// 	'9': {"P", "p"},
-		// }
+		leetSpeakNumberMap := map[rune][]string{
+			'0': {"O", "o"},
+			'1': {"I", "l", "!", "L"},
+			'2': {"Z", "z"},
+			'3': {"E", "e"},
+			'4': {"A", "a"},
+			'5': {"S", "s"},
+			'6': {"G", "g"},
+			'7': {"T", "t"},
+			'8': {"B", "b"},
+			'9': {"P", "p"},
+		}
 
 		assertEveryCharacterIsALeetSpeakVersion := func(
 			leetSpeakMap map[rune][]string,
@@ -251,6 +251,53 @@ var _ = Describe("Cmd", func() {
 			assert.True(
 				strings.Contains(output, numbersFromWord),
 				"output contains leet speak versions of numbers",
+			)
+
+		})
+
+		It("changes the numbers only when the --numbers flag is passed", func() {
+			const word = "world987654"
+			output, err := executeCommand(rootCmd, "leetspeak", word, "--numbers")
+
+			assert.NoError(err)
+			assert.NotEmpty(output)
+
+			outputContainsLeetSpeakVersionsOfNumbers := lo.EveryBy(
+				lo.Filter(
+					strings.Split(word, ""),
+					func(character string, index int) bool {
+						return unicode.IsNumber(rune(character[0]))
+					}),
+				func(character string) bool {
+
+					symbolsForCharacter := leetSpeakNumberMap[rune(character[0])]
+
+					return lo.SomeBy(
+						symbolsForCharacter,
+						func(symbol string) bool {
+							return strings.Contains(output, symbol)
+						},
+					)
+
+				})
+
+			assert.True(
+				outputContainsLeetSpeakVersionsOfNumbers,
+				"output does not contain leet speak versions of numbers",
+			)
+
+			lettersFromWord := strings.Join(
+				lo.Filter(
+					strings.Split(word, ""),
+					func(character string, index int) bool {
+						return unicode.IsLetter(rune(character[0]))
+					}),
+				"",
+			)
+
+			assert.True(
+				strings.Contains(output, lettersFromWord),
+				"output contains leet speak versions of letters",
 			)
 
 		})
