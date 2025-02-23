@@ -40,6 +40,7 @@ var _ = Describe("Cmd", func() {
 		rootCmd.AddCommand(
 			cmd.CreateWordsCmd(),
 			cmd.CreateLeetspeakCmd(),
+			cmd.CreateNumericCmd(),
 		)
 	})
 
