@@ -313,4 +313,61 @@ var _ = Describe("Cmd", func() {
 
 	})
 
+	Context("Numeric", func() {
+
+		It("generates a numeric password", func() {
+
+			output, err := executeCommand(rootCmd, "numeric")
+
+			assert.NoError(err)
+			assert.NotEmpty(output)
+
+			allCharactersAreNumbers := lo.EveryBy(
+				strings.Split(output, ""),
+				func(character string) bool {
+					return unicode.IsNumber(rune(character[0]))
+				})
+
+			assert.True(
+				allCharactersAreNumbers,
+				"output contains only numbers",
+			)
+
+		})
+
+		It("defaults to only four numbers", func() {
+			output, err := executeCommand(rootCmd, "numeric")
+
+			assert.NoError(err)
+			assert.NotEmpty(output)
+
+			assert.Len(strings.Split(output, ""), 4)
+
+		})
+
+		It("changes the amount of numbers when the length flag is provided", func() {
+			output, err := executeCommand(rootCmd, "numeric", "-l", "6")
+
+			assert.NoError(err)
+			assert.NotEmpty(output)
+
+			assert.Len(strings.Split(output, ""), 6)
+
+		})
+
+		It("only allows the length to only be between 3 and 20", func() {
+			output, err := executeCommand(rootCmd, "numeric", "-l", "2")
+
+			assert.Error(err)
+			assert.Empty(output)
+
+			output, err = executeCommand(rootCmd, "numeric", "-l", "21")
+
+			assert.Error(err)
+			assert.Empty(output)
+
+		})
+
+	})
+
 })
