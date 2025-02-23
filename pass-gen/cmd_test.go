@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/mini-clis/pass-gen/cmd"
@@ -160,7 +161,7 @@ var _ = Describe("Cmd", func() {
 			'z': {"2", "%", "7_", "Z"},
 		}
 
-		// leetSpeakNumberMap := map[rune]{
+		// leetSpeakNumberMap := map[rune][]string{
 		// 	'0': {"O", "o"},
 		// 	'1': {"I", "l", "!", "L"},
 		// 	'2': {"Z", "z"},
@@ -204,6 +205,53 @@ var _ = Describe("Cmd", func() {
 			assert.NotEmpty(output)
 
 			assertEveryCharacterIsALeetSpeakVersion(leetSpeakLetterMap, word, output)
+
+		})
+
+		It("generates a leet speak password by changing words only", func() {
+			const word = "hello123456"
+			output, err := executeCommand(rootCmd, "leetspeak", word)
+
+			assert.NoError(err)
+			assert.NotEmpty(output)
+
+			outputContainsLeetSpeakVersionsOfLetters := lo.EveryBy(
+				lo.Filter(
+					strings.Split(word, ""),
+					func(character string, index int) bool {
+						return unicode.IsLetter(rune(character[0]))
+					}),
+				func(character string) bool {
+
+					symbolsForCharacter := leetSpeakLetterMap[rune(character[0])]
+
+					return lo.SomeBy(
+						symbolsForCharacter,
+						func(symbol string) bool {
+							return strings.Contains(output, symbol)
+						},
+					)
+
+				})
+
+			assert.True(
+				outputContainsLeetSpeakVersionsOfLetters,
+				"output does not contain leet speak versions of letters",
+			)
+
+			numbersFromWord := strings.Join(
+				lo.Filter(
+					strings.Split(word, ""),
+					func(character string, index int) bool {
+						return unicode.IsNumber(rune(character[0]))
+					}),
+				"",
+			)
+
+			assert.True(
+				strings.Contains(output, numbersFromWord),
+				"output contains leet speak versions of numbers",
+			)
 
 		})
 
