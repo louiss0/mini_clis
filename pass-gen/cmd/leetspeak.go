@@ -40,7 +40,13 @@ func CreateLeetspeakCmd() *cobra.Command {
 		Use:   "leetspeak",
 		Short: "Generate leetspeak password",
 		Long: `Generate a leetspeak password using a combination of letters and numbers.
-		A leetspeak password is a password that uses your input to create passwords.With similar symbols`,
+		A leetspeak password is a password that uses your input to create passwords.
+		With similar symbols
+		By default only characters are converted to leetspeak.
+		You can use the --numbers flag to change only numbers to leetspeak.
+		We don't support symbols.
+		We don't allow both to be converted to leetspeak.
+		`,
 		// SilenceUsage: true,
 		Args: cobra.MatchAll(
 			cobra.ExactArgs(1),
