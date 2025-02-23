@@ -72,10 +72,14 @@ func CreateNumericCmd() *cobra.Command {
 				return int(num.Int64()) + min
 			}
 
-			printer.PrintUsingCommmand(cmd, fmt.Sprintf("%d", generateSecureNDigitNumber(DEFAULT_LENGTH)))
+			length, _ := cmd.Flags().GetInt(LENGTH)
+
+			printer.PrintUsingCommmand(cmd, fmt.Sprintf("%d", generateSecureNDigitNumber(length)))
 
 		},
 	}
+
+	numericCmd.Flags().IntP(LENGTH, "l", DEFAULT_LENGTH, "Length of the numeric string")
 	return numericCmd
 }
 
