@@ -24,6 +24,7 @@ package cmd
 import (
 	"math/rand"
 	"strings"
+	"unicode"
 
 	"github.com/mini-clis/pass-gen/printer"
 	"github.com/mini-clis/shared/custom_errors"
@@ -38,9 +39,32 @@ func CreateLeetspeakCmd() *cobra.Command {
 	command := &cobra.Command{
 		Use:   "leetspeak",
 		Short: "Generate leetspeak password",
-		Args:  cobra.ExactArgs(1),
 		Long: `Generate a leetspeak password using a combination of letters and numbers.
 		A leetspeak password is a password that uses your input to create passwords.With similar symbols`,
+		SilenceUsage: true,
+		Args: cobra.MatchAll(
+			cobra.ExactArgs(1),
+			func(cmd *cobra.Command, args []string) error {
+
+				argument := args[0]
+
+				if argument == "" {
+					return custom_errors.CreateInvalidArgumentErrorWithMessage("cannot be empty")
+				}
+
+				notEveryCharacterIsAStringOrNumber := !lo.EveryBy(strings.Split(argument, ""), func(char string) bool {
+					return unicode.IsLetter([]rune(char)[0]) || unicode.IsNumber([]rune(char)[0])
+				})
+
+				if notEveryCharacterIsAStringOrNumber {
+
+					return custom_errors.CreateInvalidArgumentErrorWithMessage("all characters must be a string or number")
+
+				}
+
+				return nil
+			}),
+
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			number, error := cmd.Flags().GetBool(NUMBERS)
