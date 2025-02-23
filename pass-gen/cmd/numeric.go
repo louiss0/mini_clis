@@ -25,6 +25,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"math/big"
+	"strconv"
 
 	"github.com/mini-clis/pass-gen/printer"
 	"github.com/spf13/cobra"
@@ -38,7 +39,34 @@ const (
 
 const LENGTH = "length"
 
+type lengthFlag struct {
+	Value int
+}
+
+func (l *lengthFlag) Set(value string) error {
+	length, err := strconv.Atoi(value)
+	if err != nil {
+		return err
+	}
+	if length < SHORTEST_LENGTH || length > LONGEST_LENGTH {
+		return fmt.Errorf("length must be between %d and %d", SHORTEST_LENGTH, LONGEST_LENGTH)
+	}
+	l.Value = length
+	return nil
+}
+
+func (l *lengthFlag) Type() string {
+	return "numeric"
+}
+
+func (l *lengthFlag) String() string {
+	return strconv.Itoa(l.Value)
+}
+
 func CreateNumericCmd() *cobra.Command {
+
+	lengthFlag := lengthFlag{Value: DEFAULT_LENGTH}
+
 	numericCmd := &cobra.Command{
 		Use:   "numeric",
 		Short: "Generate a random numeric string",
@@ -72,14 +100,12 @@ func CreateNumericCmd() *cobra.Command {
 				return int(num.Int64()) + min
 			}
 
-			length, _ := cmd.Flags().GetInt(LENGTH)
-
-			printer.PrintUsingCommmand(cmd, fmt.Sprintf("%d", generateSecureNDigitNumber(length)))
+			printer.PrintUsingCommmand(cmd, fmt.Sprintf("%d", generateSecureNDigitNumber(lengthFlag.Value)))
 
 		},
 	}
 
-	numericCmd.Flags().IntP(LENGTH, "l", DEFAULT_LENGTH, "Length of the numeric string")
+	numericCmd.Flags().VarP(&lengthFlag, LENGTH, "l", "Length of the numeric string")
 	return numericCmd
 }
 

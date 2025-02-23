@@ -41,7 +41,7 @@ func CreateLeetspeakCmd() *cobra.Command {
 		Short: "Generate leetspeak password",
 		Long: `Generate a leetspeak password using a combination of letters and numbers.
 		A leetspeak password is a password that uses your input to create passwords.With similar symbols`,
-		SilenceUsage: true,
+		// SilenceUsage: true,
 		Args: cobra.MatchAll(
 			cobra.ExactArgs(1),
 			func(cmd *cobra.Command, args []string) error {
@@ -155,8 +155,8 @@ func CreateLeetspeakCmd() *cobra.Command {
 			return printer.PrintUsingCommmand(cmd, strings.Join(leetSpeakSlice, ""))
 		},
 	}
-	command.Flags().BoolP(NUMBERS, "n", false, "Change numbers into leetspeak")
 
+	command.Flags().BoolP(NUMBERS, "n", false, "Change numbers into leetspeak")
 	return command
 
 }
