@@ -173,21 +173,16 @@ var _ = Describe("Cmd", func() {
 		// 	'9': {"P", "p"},
 		// }
 
-		It("generates a leet speak password", func() {
-			const word = "hello"
-
-			splitWord := strings.Split(word, "")
-
-			output, err := executeCommand(rootCmd, "leetspeak", word)
-
-			assert.NoError(err)
-			assert.NotEmpty(output)
-
+		assertEveryCharacterIsALeetSpeakVersion := func(
+			leetSpeakMap map[rune][]string,
+			input,
+			output string,
+		) {
 			everyCharacterIsALeetSpeakVersion := lo.EveryBy(
-				splitWord,
+				strings.Split(input, ""),
 				func(character string) bool {
 
-					symbolsForCharacter := leetSpeakLetterMap[rune(character[0])]
+					symbolsForCharacter := leetSpeakMap[rune(character[0])]
 
 					return lo.SomeBy(
 						symbolsForCharacter,
@@ -199,6 +194,16 @@ var _ = Describe("Cmd", func() {
 				})
 
 			assert.True(everyCharacterIsALeetSpeakVersion)
+		}
+
+		It("generates a leet speak password", func() {
+			const word = "hello"
+			output, err := executeCommand(rootCmd, "leetspeak", word)
+
+			assert.NoError(err)
+			assert.NotEmpty(output)
+
+			assertEveryCharacterIsALeetSpeakVersion(leetSpeakLetterMap, word, output)
 
 		})
 
