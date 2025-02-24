@@ -430,28 +430,42 @@ var _ = Describe("Cmd", func() {
 			assert.NotEmpty(output)
 
 			decodedByte, decodedError := hex.DecodeString(output)
-			assert.NoError(
-				decodedError,
-			)
+			assert.NoError(decodedError)
 			assert.Equal(decodedByte, []byte(strings.Join(ARGUMENTS, "")))
 
 		})
 
-		It("encodes any amount of arguments passed with a separator", func() {
+		It(
+			"encodes any amount of arguments passed with a separator when the separator flag is provided",
+			func() {
 
-			ARGUMENTS := []string{"hello", "world"}
-			output, err := executeCommand(rootCmd, slices.Insert(ARGUMENTS, 0, "encode", "-s", ",")...)
+				ARGUMENTS := []string{"hello", "world"}
+				output, err := executeCommand(rootCmd, slices.Insert(ARGUMENTS, 0, "encode", "-s", ",")...)
 
-			assert.NoError(err)
-			assert.NotEmpty(output)
+				assert.NoError(err)
+				assert.NotEmpty(output)
 
-			decodedByte, decodedError := hex.DecodeString(output)
-			assert.NoError(
-				decodedError,
-			)
-			assert.Equal(decodedByte, []byte(strings.Join(ARGUMENTS, ",")))
+				splitEncodedStrings := strings.Split(output, ",")
 
-		})
+				assert.Len(splitEncodedStrings, len(ARGUMENTS))
+
+				lo.ForEach(
+					splitEncodedStrings,
+					func(splitEncodedString string, index int) {
+
+						decodedByte, decodedError := hex.DecodeString(splitEncodedString)
+
+						assert.NoError(
+							decodedError,
+							"Failed to decode string at index %d",
+							index,
+						)
+
+						assert.Equal(decodedByte, []byte(ARGUMENTS[index]))
+
+					})
+
+			})
 
 	})
 
