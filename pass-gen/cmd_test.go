@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -42,6 +44,7 @@ var _ = Describe("Cmd", func() {
 			cmd.CreateWordsCmd(),
 			cmd.CreateLeetspeakCmd(),
 			cmd.CreateNumericCmd(),
+			cmd.CreateEncodeCmd(),
 		)
 	})
 
@@ -406,13 +409,34 @@ var _ = Describe("Cmd", func() {
 
 	Context("Encode", func() {
 		It("encodes a string", func() {
-			output, err := executeCommand(rootCmd, "encode", "hello")
+			const ARGUMENT = "hello"
+			output, err := executeCommand(rootCmd, "encode", ARGUMENT)
 
 			assert.NoError(err)
 			assert.NotEmpty(output)
 
-			assert.Equal("aGVsbG8=", output)
+			decodedByte, decodedError := hex.DecodeString(output)
+			assert.NoError(decodedError)
+
+			assert.Equal(decodedByte, []byte(ARGUMENT))
 		})
+
+		It("encodes any amount of args passed", func() {
+
+			ARGUMENTS := []string{"hello", "world"}
+			output, err := executeCommand(rootCmd, slices.Insert(ARGUMENTS, 0, "encode")...)
+
+			assert.NoError(err)
+			assert.NotEmpty(output)
+
+			decodedByte, decodedError := hex.DecodeString(output)
+			assert.NoError(
+				decodedError,
+			)
+			assert.Equal(decodedByte, []byte(strings.Join(ARGUMENTS, "")))
+
+		})
+
 	})
 
 })
