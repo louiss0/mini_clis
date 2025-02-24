@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -366,6 +367,31 @@ var _ = Describe("Cmd", func() {
 
 			assert.Error(err)
 			assert.Empty(output)
+
+		})
+
+		It("generates a timestamp when the date-pin flag is provided", func() {
+
+			isTimestamp := func(n int64) bool {
+				// Define reasonable timestamp bounds
+				minTimestamp := int64(946684800)      // January 1, 2000 (seconds)
+				maxTimestamp := int64(4102444800)     // January 1, 2100 (seconds)
+				minTimestampMs := minTimestamp * 1000 // In milliseconds
+				maxTimestampMs := maxTimestamp * 1000 // In milliseconds
+
+				// Check if it's in the valid range for seconds or milliseconds
+				return (n >= minTimestamp && n <= maxTimestamp) || (n >= minTimestampMs && n <= maxTimestampMs)
+			}
+
+			output, err := executeCommand(rootCmd, "numeric", "-d")
+
+			assert.NoError(err)
+			assert.NotEmpty(output)
+
+			intOutput, err := strconv.ParseInt(output, 10, 64)
+			assert.NoError(err)
+
+			assert.True(isTimestamp(intOutput))
 
 		})
 
