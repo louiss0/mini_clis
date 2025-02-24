@@ -404,4 +404,15 @@ var _ = Describe("Cmd", func() {
 
 	})
 
+	Context("Encode", func() {
+		It("encodes a string", func() {
+			output, err := executeCommand(rootCmd, "encode", "hello")
+
+			assert.NoError(err)
+			assert.NotEmpty(output)
+
+			assert.Equal("aGVsbG8=", output)
+		})
+	})
+
 })
