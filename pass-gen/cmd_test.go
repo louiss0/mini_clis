@@ -357,18 +357,25 @@ var _ = Describe("Cmd", func() {
 
 		})
 
-		It("only allows the length to only be between 3 and 20", func() {
-			output, err := executeCommand(rootCmd, "numeric", "-l", "2")
+		It(
+			fmt.Sprintf(
+				"only allows the length to only be between %d and %d",
+				cmd.SHORTEST_LENGTH,
+				cmd.LONGEST_LENGTH,
+			),
+			func() {
+				output, err := executeCommand(rootCmd, "numeric", "-l", "2")
 
-			assert.Error(err)
-			assert.Empty(output)
+				assert.Error(err)
+				assert.Empty(output)
 
-			output, err = executeCommand(rootCmd, "numeric", "-l", "21")
+				output, err = executeCommand(rootCmd, "numeric", "-l", "21")
 
-			assert.Error(err)
-			assert.Empty(output)
+				assert.Error(err)
+				assert.Empty(output)
 
-		})
+			},
+		)
 
 		It("generates a timestamp when the date-pin flag is provided", func() {
 
