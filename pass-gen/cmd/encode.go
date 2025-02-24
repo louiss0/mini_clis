@@ -30,6 +30,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const SEPERATOR = "separator"
+
 // CreateEncodeCmd creates and returns the encode command
 func CreateEncodeCmd() *cobra.Command {
 	encodeCmd := &cobra.Command{
@@ -41,15 +43,19 @@ func CreateEncodeCmd() *cobra.Command {
 		Args: cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 
+			separator, _ := cmd.Flags().GetString(SEPERATOR)
+
 			hexcodedArgs := lo.Map(args, func(arg string, _ int) string {
 				return hex.EncodeToString([]byte(arg))
 			})
 
-
-			printer.PrintUsingCommmand(cmd, strings.Join(hexcodedArgs, ""))
+			printer.PrintUsingCommmand(cmd, strings.Join(hexcodedArgs, separator))
 
 		},
 	}
+
+	encodeCmd.Flags().StringP(SEPERATOR, "s", "", "Separator to use between encoded arguments")
+
 	return encodeCmd
 }
 
