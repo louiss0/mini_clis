@@ -30,6 +30,7 @@ import (
 
 	"github.com/mini-clis/pass-gen/printer"
 	"github.com/mini-clis/shared/custom_errors"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )
 
@@ -81,8 +82,6 @@ func CreateNumericCmd() *cobra.Command {
 	`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			var number int
-
 			datePin, error := cmd.Flags().GetBool(DATE_PIN)
 
 			if error != nil {
@@ -93,38 +92,41 @@ func CreateNumericCmd() *cobra.Command {
 				)
 			}
 
-			if datePin {
-				number = int(time.Now().UnixMilli())
-			} else {
+			generateSecureNDigitNumber := func(n int) int {
 
-				generateSecureNDigitNumber := func(n int) int {
-
-					// intPow computes integer exponentiation (10^n)
-					intPow := func(base, exp int) int {
-						result := 1
-						for i := 0; i < exp; i++ {
-							result *= base
-						}
-						return result
+				// intPow computes integer exponentiation (10^n)
+				intPow := func(base, exp int) int {
+					result := 1
+					for i := 0; i < exp; i++ {
+						result *= base
 					}
-
-					if n <= 0 {
-						return 0
-					}
-
-					// Define the range for n-digit numbers
-					min := intPow(10, n-1)   // Smallest n-digit number
-					max := intPow(10, n) - 1 // Largest n-digit number
-
-					// Generate a cryptographically secure random number
-					num, _ := rand.Int(rand.Reader, big.NewInt(int64(max-min+1)))
-					return int(num.Int64()) + min
+					return result
 				}
 
-				number = generateSecureNDigitNumber(lengthFlag.Value)
+				if n <= 0 {
+					return 0
+				}
+
+				// Define the range for n-digit numbers
+				min := intPow(10, n-1)   // Smallest n-digit number
+				max := intPow(10, n) - 1 // Largest n-digit number
+
+				// Generate a cryptographically secure random number
+				num, _ := rand.Int(rand.Reader, big.NewInt(int64(max-min+1)))
+				return int(num.Int64()) + min
 			}
 
-			return printer.PrintUsingCommmand(cmd, fmt.Sprintf("%d", number))
+			number := lo.
+				If(datePin, int(time.Now().UnixMilli())).
+				Else(generateSecureNDigitNumber(lengthFlag.Value))
+
+			return printer.PrintUsingCommmand(
+				cmd,
+				fmt.Sprintf(
+					"%d",
+					number,
+				),
+			)
 
 		},
 	}
