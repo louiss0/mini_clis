@@ -437,6 +437,22 @@ var _ = Describe("Cmd", func() {
 
 		})
 
+		It("encodes any amount of arguments passed with a separator", func() {
+
+			ARGUMENTS := []string{"hello", "world"}
+			output, err := executeCommand(rootCmd, slices.Insert(ARGUMENTS, 0, "encode", "-s", ",")...)
+
+			assert.NoError(err)
+			assert.NotEmpty(output)
+
+			decodedByte, decodedError := hex.DecodeString(output)
+			assert.NoError(
+				decodedError,
+			)
+			assert.Equal(decodedByte, []byte(strings.Join(ARGUMENTS, ",")))
+
+		})
+
 	})
 
 })
