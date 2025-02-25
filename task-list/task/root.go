@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/mini-clis/task-list/custom_errors"
 	"github.com/samber/lo"
 	"github.com/tidwall/pretty"
 )
@@ -44,14 +43,12 @@ func ParsePriority(input string) (priority, error) {
 
 	if !lo.Contains(AllowedProrities, input) {
 
-		return "", custom_errors.
-			CreateInvalidFlagErrorWithMessage(
-				fmt.Sprintf(
+		return "", fmt.Errorf(
 					"Wrong option %s a priority is supposed to be %s",
 					input,
 					strings.Join(AllowedProrities, ","),
-				),
-			)
+				)
+
 	}
 
 	return priority(input), nil

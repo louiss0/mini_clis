@@ -8,7 +8,7 @@ import (
 	"slices"
 
 	"github.com/charmbracelet/huh"
-	"github.com/mini-clis/task-list/custom_errors"
+	"github.com/mini-clis/shared/custom_errors"
 	"github.com/mini-clis/task-list/flags"
 	"github.com/mini-clis/task-list/task"
 	"github.com/samber/lo"

@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mini-clis/task-list/custom_errors"
 	"github.com/samber/lo"
 )
 
@@ -34,7 +33,7 @@ func (t *emptyStringFlag) Set(value string) error {
 	}
 
 	if match {
-		return custom_errors.CreateInvalidFlagErrorWithMessage(fmt.Sprintf("The %s is empty", t.flagName))
+		return fmt.Errorf("The %s is empty", t.flagName)
 	}
 	t.value = value
 	return nil
@@ -68,9 +67,7 @@ func (c *boolFlag) Set(value string) error {
 	}
 
 	if match && !lo.Contains([]string{"true", "false"}, value) {
-		return custom_errors.CreateInvalidFlagErrorWithMessage(
-			"complete flag must be either 'true' or 'false'",
-		)
+		return fmt.Errorf("complete flag must be either 'true' or 'false'")
 	}
 	c.value = value
 	return nil
@@ -112,9 +109,7 @@ func (self *unionFlag) Set(value string) error {
 	}
 
 	if match && !lo.Contains(self.allowedValues, value) {
-		return custom_errors.CreateInvalidFlagErrorWithMessage(
-			fmt.Sprintf("%s flag must be one of: %s", self.flagName, strings.Join(self.allowedValues, ", ")),
-		)
+		return fmt.Errorf("%s flag must be one of: %s", self.flagName, strings.Join(self.allowedValues, ", "))
 	}
 	self.value = value
 	return nil
